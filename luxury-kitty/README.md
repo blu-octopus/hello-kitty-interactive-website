@@ -2,7 +2,7 @@
 
 A React + TypeScript + Vite application with Three.js and interactive features.
 
-## 🚀 Deployment to GitHub Pages
+## ???? Deployment to GitHub Pages
 
 This project is configured for automatic deployment to GitHub Pages via GitHub Actions.
 
@@ -10,7 +10,7 @@ This project is configured for automatic deployment to GitHub Pages via GitHub A
 
 1. **Enable GitHub Pages in your repository:**
    - Go to your repository on GitHub
-   - Navigate to **Settings** → **Pages**
+   - Navigate to **Settings** ??? **Pages**
    - Under **Source**, select **GitHub Actions**
 
 2. **Push to main branch:**
