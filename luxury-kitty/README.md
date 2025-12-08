@@ -1,4 +1,43 @@
-# React + TypeScript + Vite
+# Luxury Kitty - Interactive Website
+
+A React + TypeScript + Vite application with Three.js and interactive features.
+
+## 🚀 Deployment to GitHub Pages
+
+This project is configured for automatic deployment to GitHub Pages via GitHub Actions.
+
+### Setup Instructions
+
+1. **Enable GitHub Pages in your repository:**
+   - Go to your repository on GitHub
+   - Navigate to **Settings** → **Pages**
+   - Under **Source**, select **GitHub Actions**
+
+2. **Push to main branch:**
+   - The GitHub Actions workflow will automatically build and deploy your site when you push to the `main` branch
+   - The workflow file is located at `.github/workflows/deploy.yml`
+
+3. **Access your site:**
+   - Your site will be available at: `https://blu-octopus.github.io/hello-kitty-interactive-website/`
+
+### Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+The build output will be in the `dist` folder, configured with the correct base path for GitHub Pages.
+
+---
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
