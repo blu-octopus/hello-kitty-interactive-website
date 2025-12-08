@@ -35,6 +35,8 @@ jobs:
         run: |
           cd luxury-kitty
           npm run build
+          # Add .nojekyll to disable Jekyll processing on GitHub Pages
+          touch dist/.nojekyll
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
