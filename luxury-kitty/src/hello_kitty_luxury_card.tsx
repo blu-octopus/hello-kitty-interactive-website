@@ -4,7 +4,8 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- SDF Helper Functions ---
+// --- OLD SDF Helper Functions (COMMENTED OUT) ---
+/*
 const sdSphere = (p: [number, number, number], r: number): number => {
   return Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) - r;
 };
@@ -37,116 +38,97 @@ const rotateZ = (p: [number, number, number], angle: number): [number, number, n
   const s = Math.sin(angle);
   return [p[0] * c - p[1] * s, p[0] * s + p[1] * c, p[2]];
 };
+*/
 
-// --- Main SDF Map Function for Hello Kitty ---
+// --- OLD SDF CODE (COMMENTED OUT) ---
+/*
 const mapHelloKitty = (p: [number, number, number], part?: string): number => {
-  let d = 1e6;
-  const scale = 3.0;
-  const p_scaled: [number, number, number] = [p[0] / scale, p[1] / scale, p[2] / scale];
-
-  // 1. Head (white)
-  const p_head: [number, number, number] = [p_scaled[0], p_scaled[1] - 0.2, p_scaled[2]];
-  const head_radius = 1.0;
-  let d_head = sdSphere(p_head, head_radius);
-
-  // 2. Ears (white)
-  const p_ear_r: [number, number, number] = [p_scaled[0] - 0.75, p_scaled[1] - 0.7, p_scaled[2]];
-  const d_ear_r = sdSphere(p_ear_r, 0.25);
-  const p_ear_l: [number, number, number] = [p_scaled[0] + 0.75, p_scaled[1] - 0.7, p_scaled[2]];
-  const d_ear_l = sdSphere(p_ear_l, 0.25);
-
-  d = opSmoothUnion(d_head, d_ear_r, 0.2);
-  d = opSmoothUnion(d, d_ear_l, 0.2);
-
-  // 3. Body (white)
-  const p_body: [number, number, number] = [p_scaled[0], p_scaled[1] + 1.0, p_scaled[2]];
-  const d_body = sdCylinder(p_body, [0.8, 0.5]);
-  d = opSmoothUnion(d, d_body, 0.3);
-
-  // 4. Arms (cylinders) - on sides of body, moved down
-  // Left arm (viewer's right) - moved down more
-  const p_arm_l: [number, number, number] = [p_scaled[0] - 0.9, p_scaled[1] + 0.6, p_scaled[2]];
-  const d_arm_l = sdCylinder(p_arm_l, [0.15, 0.6]);
-  // Left hand (sphere right under cylinder)
-  const p_hand_l: [number, number, number] = [p_scaled[0] - 0.9, p_scaled[1] + 1.2, p_scaled[2]];
-  const d_hand_l = sdSphere(p_hand_l, 0.2);
-  // Left thumb (smaller sphere)
-  const p_thumb_l: [number, number, number] = [p_scaled[0] - 1.0, p_scaled[1] + 1.1, p_scaled[2] + 0.15];
-  const d_thumb_l = sdSphere(p_thumb_l, 0.08);
-  
-  // Right arm (viewer's left) - moved down more
-  const p_arm_r: [number, number, number] = [p_scaled[0] + 0.9, p_scaled[1] + 0.6, p_scaled[2]];
-  const d_arm_r = sdCylinder(p_arm_r, [0.15, 0.6]);
-  // Right hand (sphere right under cylinder)
-  const p_hand_r: [number, number, number] = [p_scaled[0] + 0.9, p_scaled[1] + 1.2, p_scaled[2]];
-  const d_hand_r = sdSphere(p_hand_r, 0.2);
-  // Right thumb (smaller sphere)
-  const p_thumb_r: [number, number, number] = [p_scaled[0] + 1.0, p_scaled[1] + 1.1, p_scaled[2] + 0.15];
-  const d_thumb_r = sdSphere(p_thumb_r, 0.08);
-
-  // 5. Legs (cylinders) - moved down to touch bottom of body
-  const p_leg_l: [number, number, number] = [p_scaled[0] - 0.4, p_scaled[1] + 1.8, p_scaled[2]];
-  const d_leg_l = sdCylinder(p_leg_l, [0.2, 0.4]);
-  const p_leg_r: [number, number, number] = [p_scaled[0] + 0.4, p_scaled[1] + 1.8, p_scaled[2]];
-  const d_leg_r = sdCylinder(p_leg_r, [0.2, 0.4]);
-
-  // 6. Clothes (pink)
-  let d_clothes = 1e6;
-  if (part === 'clothes') {
-    const p_clothes: [number, number, number] = [p_scaled[0], p_scaled[1] + 1.0, p_scaled[2]];
-    d_clothes = sdCylinder(p_clothes, [0.85, 0.52]);
-    d_clothes = Math.max(d_clothes, -d_body);
-  }
-
-  // 7. Bow (pink)
-  const bow_pivot: [number, number, number] = [0.7, 0.7, 0.2];
-  const p_bow: [number, number, number] = [
-    p_scaled[0] - bow_pivot[0],
-    p_scaled[1] - bow_pivot[1],
-    p_scaled[2] - bow_pivot[2],
-  ];
-  const p_loop_r = rotateZ(p_bow, -0.7);
-  const d_loop_r = sdBox([p_loop_r[0] - 0.2, p_loop_r[1], p_loop_r[2]], [0.3, 0.15, 0.1]);
-  const p_loop_l = rotateZ(p_bow, 0.7);
-  const d_loop_l = sdBox([p_loop_l[0] + 0.2, p_loop_l[1], p_loop_l[2]], [0.3, 0.15, 0.1]);
-  const d_knot = sdSphere(p_bow, 0.1);
-  let d_bow = opUnion(d_loop_r, d_loop_l);
-  d_bow = opUnion(d_bow, d_knot);
-
-  // 8. Eyes (dark grey) - closer to front (positive z)
-  const p_eye_l: [number, number, number] = [p_scaled[0] + 0.3, p_scaled[1] - 0.1, p_scaled[2] + 0.3];
-  const d_eye_l = sdSphere(p_eye_l, 0.12);
-  const p_eye_r: [number, number, number] = [p_scaled[0] - 0.3, p_scaled[1] - 0.1, p_scaled[2] + 0.3];
-  const d_eye_r = sdSphere(p_eye_r, 0.12);
-
-  // 9. Nose (yellow) - single larger elliptical sphere proportional to eyes
-  const p_nose: [number, number, number] = [p_scaled[0], p_scaled[1] + 0.2, p_scaled[2] + 0.2];
-  // Elliptical: scale x and y differently
-  const nose_scale = [0.15, 0.12, 0.1]; // Wider than tall
-  const d_nose = Math.sqrt(
-    Math.pow(p_nose[0] / nose_scale[0], 2) + 
-    Math.pow(p_nose[1] / nose_scale[1], 2) + 
-    Math.pow(p_nose[2] / nose_scale[2], 2)
-  ) - 1.0;
-
-  if (part === 'head') return Math.min(d, 1e6);
-  if (part === 'body') return d_body;
-  if (part === 'clothes') return d_clothes;
-  if (part === 'bow') return d_bow;
-  if (part === 'leftEye') return d_eye_l;
-  if (part === 'rightEye') return d_eye_r;
-  if (part === 'nose') return d_nose;
-  if (part === 'armLeft') return Math.min(d_arm_l, d_hand_l, d_thumb_l);
-  if (part === 'armRight') return Math.min(d_arm_r, d_hand_r, d_thumb_r);
-  if (part === 'legLeft') return d_leg_l;
-  if (part === 'legRight') return d_leg_r;
-
-  return Math.min(d, d_bow);
+  // ... old SDF implementation commented out
 };
+*/
 
+// --- NEW ELLIPSOID-BASED Hello Kitty Shape ---
+// Returns true if point (x,y,z) is inside the shape volume
 const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boolean => {
-  const d = mapHelloKitty([x, y, z], part);
-  return d <= 0.1;
+  // --- A. Main Body Shapes (Pearl Off-White Ivory) ---
+  
+  // Head (Ellipsoid) - Centered at (0, 2, 0)
+  const head = (Math.pow(x / 3.2, 2) + Math.pow((y - 2) / 2.4, 2) + Math.pow(z / 2.2, 2)) <= 1;
+
+  // Body (Ellipsoid) - Centered at (0, -1.5, 0)
+  const body = (Math.pow(x / 2.2, 2) + Math.pow((y + 1.5) / 2.8, 2) + Math.pow(z / 1.8, 2)) <= 1;
+
+  // Left Ear (Ellipsoid) - Tilted away from each other, extruded more, Centered at (3.2, 4.5, 0)
+  const earL = (Math.pow((x - 3.2) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow(z / 0.6, 2)) <= 1;
+
+  // Right Ear (Ellipsoid) - Tilted away from each other, extruded more, Centered at (-3.2, 4.5, 0)
+  const earR = (Math.pow((x + 3.2) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow(z / 0.6, 2)) <= 1;
+
+  // Left Arm (Ellipsoid) - Centered at (2.8, -0.5, 0.5)
+  const armL = (Math.pow((x - 2.8) / 0.8, 2) + Math.pow((y + 0.5) / 1.5, 2) + Math.pow((z - 0.5) / 0.8, 2)) <= 1;
+
+  // Right Arm (Ellipsoid) - Centered at (-2.8, -0.5, 0.5)
+  const armR = (Math.pow((x + 2.8) / 0.8, 2) + Math.pow((y + 0.5) / 1.5, 2) + Math.pow((z - 0.5) / 0.8, 2)) <= 1;
+
+  // Left Leg (Ellipsoid) - Centered at (1.2, -3.5, 0.2)
+  const legL = (Math.pow((x - 1.2) / 0.9, 2) + Math.pow((y + 3.5) / 1.2, 2) + Math.pow((z - 0.2) / 0.9, 2)) <= 1;
+
+  // Right Leg (Ellipsoid) - Centered at (-1.2, -3.5, 0.2)
+  const legR = (Math.pow((x + 1.2) / 0.9, 2) + Math.pow((y + 3.5) / 1.2, 2) + Math.pow((z - 0.2) / 0.9, 2)) <= 1;
+
+  // --- B. Facial Features ---
+  
+  // Dark Grey Eyes (Much Bigger Spheres) - same z axis as nose
+  const eyeR = (Math.pow((x - 1.2) / 0.7, 2) + Math.pow((y - 2.5) / 0.7, 2) + Math.pow((z - 2.0) / 0.7, 2)) <= 1;
+  const eyeL = (Math.pow((x + 1.2) / 0.7, 2) + Math.pow((y - 2.5) / 0.7, 2) + Math.pow((z - 2.0) / 0.7, 2)) <= 1;
+
+  // Yellow Nose (Small Ellipsoid/Sphere) - z axis at 2.0
+  const nose = (Math.pow(x / 0.5, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
+
+  // Dark Grey Whiskers (Much thicker and wider ellipsoids) - bigger max
+  // Right Whiskers (3 segments) - thicker and wider
+  const whiskerR1 = (Math.pow((x - 2.0) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  const whiskerR2 = (Math.pow((x - 2.2) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  const whiskerR3 = (Math.pow((x - 2.0) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+
+  // Left Whiskers (3 segments, symmetric) - thicker and wider
+  const whiskerL1 = (Math.pow((x + 2.0) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  const whiskerL2 = (Math.pow((x + 2.2) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  const whiskerL3 = (Math.pow((x + 2.0) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+
+  // --- C. Clothing (Pink) ---
+  
+  // Pink Shirt/Dress (Covers the upper body, slightly larger than the body primitive)
+  const shirt = (Math.pow(x / 2.5, 2) + Math.pow((y + 1.5) / 3.0, 2) + Math.pow(z / 2.0, 2)) <= 1;
+
+  // Pink Bow (Simple sphere approximation)
+  const bowCenter = (Math.pow((x - 3.0) / 0.5, 2) + Math.pow((y - 3.5) / 0.5, 2) + Math.pow(z / 0.5, 2)) <= 1;
+
+  // --- D. Part Detection ---
+  if (part === 'head') return head;
+  if (part === 'body') return body;
+  if (part === 'earLeft') return earL;
+  if (part === 'earRight') return earR;
+  if (part === 'armLeft') return armL;
+  if (part === 'armRight') return armR;
+  if (part === 'legLeft') return legL;
+  if (part === 'legRight') return legR;
+  if (part === 'leftEye') return eyeL;
+  if (part === 'rightEye') return eyeR;
+  if (part === 'nose') return nose;
+  if (part === 'whisker') return whiskerR1 || whiskerR2 || whiskerR3 || whiskerL1 || whiskerL2 || whiskerL3;
+  if (part === 'clothes') return shirt;
+  if (part === 'bow') return bowCenter;
+
+  // --- E. Final Combination (Boolean OR = Union) ---
+  return (
+    // Main Body (Pearl Off-White Ivory)
+    head || body || earL || earR || armL || armR || legL || legR || 
+    // Facial Features (Dark Grey/Yellow)
+    eyeR || eyeL || nose || whiskerR1 || whiskerR2 || whiskerR3 || whiskerL1 || whiskerL2 || whiskerL3 ||
+    // Clothing (Pink)
+    shirt || bowCenter
+  );
 };
 
 const generateHelloKittyPositions = (count: number, part?: string): Float32Array => {
@@ -181,12 +163,29 @@ const generateHelloKittyPositions = (count: number, part?: string): Float32Array
 
 const generateEyePositions = (): Float32Array => {
   const positions = new Float32Array(6);
-  positions[0] = -0.9;
-  positions[1] = 0.3;
-  positions[2] = 0.9; // Closer to front
-  positions[3] = 0.9;
-  positions[4] = 0.3;
-  positions[5] = 0.9; // Closer to front
+  // Eyes based on new ellipsoid positions
+  positions[0] = -1.2; // Left eye (viewer's right)
+  positions[1] = 2.5;
+  positions[2] = 2.0;
+  positions[3] = 1.2; // Right eye (viewer's left)
+  positions[4] = 2.5;
+  positions[5] = 2.0;
+  return positions;
+};
+
+// Generate nose positions - based on new ellipsoid
+const generateNosePositions = (count: number): Float32Array => {
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    // Generate positions inside the nose ellipsoid
+    const angle1 = Math.random() * Math.PI * 2;
+    const angle2 = Math.random() * Math.PI;
+    const radius = Math.random() * 0.5; // Nose radius
+    
+    positions[i * 3] = radius * Math.sin(angle2) * Math.cos(angle1);
+    positions[i * 3 + 1] = 1.2 + radius * Math.cos(angle2) * 0.4;
+    positions[i * 3 + 2] = 2.0 + radius * Math.sin(angle2) * Math.sin(angle1) * 0.5;
+  }
   return positions;
 };
 
@@ -200,9 +199,27 @@ const generateArmPositions = (count: number, side: 'left' | 'right'): Float32Arr
     const angle = Math.random() * Math.PI * 2;
     const radius = Math.random() * 0.45; // Arm radius
     
-    positions[i * 3] = sign * (0.9 + radius * Math.cos(angle));
+    positions[i * 3] = sign * (1.1 + radius * Math.cos(angle)); // Outside body
     positions[i * 3 + 1] = 0.6 + t * 0.6; // From 0.6 to 1.2 (arm length)
     positions[i * 3 + 2] = radius * Math.sin(angle);
+  }
+  
+  return positions;
+};
+
+// Generate positions for hands (filled with body-colored particles)
+const generateHandPositions = (count: number, side: 'left' | 'right'): Float32Array => {
+  const positions = new Float32Array(count * 3);
+  const sign = side === 'left' ? -1 : 1;
+  
+  for (let i = 0; i < count; i++) {
+    const angle1 = Math.random() * Math.PI * 2;
+    const angle2 = Math.random() * Math.PI;
+    const radius = Math.random() * 0.25; // Hand radius
+    
+    positions[i * 3] = sign * 1.1 + radius * Math.sin(angle2) * Math.cos(angle1);
+    positions[i * 3 + 1] = 1.2 + radius * Math.cos(angle2);
+    positions[i * 3 + 2] = radius * Math.sin(angle2) * Math.sin(angle1);
   }
   
   return positions;
@@ -253,37 +270,61 @@ const generatePolaroidStartPositions = (count: number): Array<[number, number, n
   return positions;
 };
 
-// Generate sparse floating objects (more spheres)
+// Generate sparse floating objects (more spheres) - crystal-like, glowy, varied sizes, orbiting
 const generateFloatingObjects = (count: number): Array<{
   position: [number, number, number];
   color: string;
   size: number;
   shape: 'sphere' | 'cube' | 'tetrahedron';
+  glowIntensity: number;
+  orbitalAngle: number;
+  orbitalSpeed: number;
+  orbitalRadius: number;
+  verticalOffset: number;
 }> => {
   const objects: Array<{
     position: [number, number, number];
     color: string;
     size: number;
     shape: 'sphere' | 'cube' | 'tetrahedron';
+    glowIntensity: number;
+    orbitalAngle: number;
+    orbitalSpeed: number;
+    orbitalRadius: number;
+    verticalOffset: number;
   }> = [];
-  const colors = ['#FFD700', '#FF0000', '#0D9488']; // Gold, Red, Emerald
-  const shapes: Array<'sphere' | 'cube' | 'tetrahedron'> = ['sphere', 'sphere', 'sphere', 'sphere', 'sphere', 'cube', 'tetrahedron']; // Mostly spheres
+  const colors = ['#0D9488', '#8B0000', '#FFD700']; // Emerald, Dark Red, Gold only
+  const shapes: Array<'sphere' | 'cube' | 'tetrahedron'> = ['sphere', 'cube', 'tetrahedron'];
 
   for (let i = 0; i < count; i++) {
-    // Place far from Hello Kitty (outside 10 unit radius), sparse
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 12 + Math.random() * 10; // 12-22 units away
-    const height = (Math.random() - 0.5) * 12;
+    // Orbital position around Hello Kitty
+    const baseAngle = (i / count) * Math.PI * 2; // Evenly distributed around
+    const orbitalRadius = 15 + Math.random() * 5; // 15-20 units away
+    const orbitalSpeed = 0.2 + Math.random() * 0.3; // Varying orbital speeds
+    const verticalOffset = (Math.random() - 0.5) * 8; // Vertical variation
+    
+    // Base size with 50% variation (if base is 0.4, range is 0.2-0.6)
+    const baseSize = 0.3;
+    const sizeVariation = baseSize * 0.5; // 50% of base
+    const size = baseSize - sizeVariation + Math.random() * (sizeVariation * 2);
+    
+    // Varying glow intensity for depth
+    const glowIntensity = 0.3 + Math.random() * 0.5; // 0.3-0.8
     
     objects.push({
       position: [
-        Math.cos(angle) * distance,
-        height,
-        Math.sin(angle) * distance,
+        Math.cos(baseAngle) * orbitalRadius,
+        verticalOffset,
+        Math.sin(baseAngle) * orbitalRadius,
       ],
       color: colors[Math.floor(Math.random() * colors.length)],
-      size: 0.15 + Math.random() * 0.1, // 0.15-0.25
+      size,
       shape: shapes[Math.floor(Math.random() * shapes.length)],
+      glowIntensity,
+      orbitalAngle: baseAngle,
+      orbitalSpeed,
+      orbitalRadius,
+      verticalOffset,
     });
   }
 
@@ -418,7 +459,7 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={0.15}
+          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
           metalness={0.7}
           roughness={0.2}
         />
@@ -428,7 +469,7 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={0.15}
+          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
           metalness={0.7}
           roughness={0.2}
         />
@@ -438,7 +479,7 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={0.15}
+          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
           metalness={0.7}
           roughness={0.2}
         />
@@ -461,6 +502,23 @@ const Arms: React.FC<{
   const leftArmPositions = useMemo(() => leftArmTargets.slice(), [leftArmTargets]);
   const rightArmPositions = useMemo(() => rightArmTargets.slice(), [rightArmTargets]);
 
+  const leftHandTargets = useMemo(() => generateHandPositions(200, 'left'), []);
+  const rightHandTargets = useMemo(() => generateHandPositions(200, 'right'), []);
+  const leftHandPositions = useMemo(() => leftHandTargets.slice(), [leftHandTargets]);
+  const rightHandPositions = useMemo(() => rightHandTargets.slice(), [rightHandTargets]);
+
+  useFrame(() => {
+    if (groupRef.current) {
+      if (deviceRotation) {
+        groupRef.current.rotation.x = deviceRotation.x * 0.5;
+        groupRef.current.rotation.y = deviceRotation.y * 0.5;
+        groupRef.current.rotation.z = deviceRotation.z * 0.3;
+      }
+      groupRef.current.rotation.y += mouseRotation.x * 0.05;
+      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+    }
+  });
+
   return (
     <group ref={groupRef}>
       {/* Left Arm Particles */}
@@ -474,16 +532,17 @@ const Arms: React.FC<{
         emissiveColor={COLORS.pearlWhite2}
         baseSize={0.08}
       />
-      {/* Left Hand sphere - right under cylinder */}
-      <mesh position={[-2.7, 1.8, 0]}>
-        <sphereGeometry args={[0.6, 16, 16]} />
-        <meshStandardMaterial color={COLORS.pearlWhite} emissive={COLORS.pearlWhite2} emissiveIntensity={0.15} />
-      </mesh>
-      {/* Left Thumb */}
-      <mesh position={[-2.8, 1.7, 0.45]}>
-        <sphereGeometry args={[0.24, 12, 12]} />
-        <meshStandardMaterial color={COLORS.pearlWhite} emissive={COLORS.pearlWhite2} emissiveIntensity={0.15} />
-      </mesh>
+      {/* Left Hand Particles - body colored orbs, below cylinder */}
+      <HelloKittyParticle
+        positions={leftHandPositions}
+        targetPositions={leftHandTargets}
+        isChaos={isChaos}
+        mouseRotation={mouseRotation}
+        deviceRotation={deviceRotation}
+        color={COLORS.pearlWhite}
+        emissiveColor={COLORS.pearlWhite2}
+        baseSize={0.08}
+      />
 
       {/* Right Arm Particles */}
       <HelloKittyParticle
@@ -496,16 +555,17 @@ const Arms: React.FC<{
         emissiveColor={COLORS.pearlWhite2}
         baseSize={0.08}
       />
-      {/* Right Hand sphere - right under cylinder */}
-      <mesh position={[2.7, 1.8, 0]}>
-        <sphereGeometry args={[0.6, 16, 16]} />
-        <meshStandardMaterial color={COLORS.pearlWhite} emissive={COLORS.pearlWhite2} emissiveIntensity={0.15} />
-      </mesh>
-      {/* Right Thumb */}
-      <mesh position={[2.8, 1.7, 0.45]}>
-        <sphereGeometry args={[0.24, 12, 12]} />
-        <meshStandardMaterial color={COLORS.pearlWhite} emissive={COLORS.pearlWhite2} emissiveIntensity={0.15} />
-      </mesh>
+      {/* Right Hand Particles - body colored orbs, below cylinder */}
+      <HelloKittyParticle
+        positions={rightHandPositions}
+        targetPositions={rightHandTargets}
+        isChaos={isChaos}
+        mouseRotation={mouseRotation}
+        deviceRotation={deviceRotation}
+        color={COLORS.pearlWhite}
+        emissiveColor={COLORS.pearlWhite2}
+        baseSize={0.08}
+      />
     </group>
   );
 };
@@ -552,18 +612,19 @@ const Legs: React.FC<{
   );
 };
 
-// Whiskers Component - forked, wider, farther apart
+// Whiskers Component - NOT forked, just tilted apart, thicker, bigger, same color as eyes
 const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotation?: { x: number; y: number; z: number } }> = ({ mouseRotation, deviceRotation }) => {
   const groupRef = useRef<THREE.Group>(null);
   const whiskers = useMemo(() => [
-    // Left side - forked (split at end), wider, farther apart
-    { start: [-1.5, 0.4, 0.1], mid: [-2.2, 0.4, 0.1], end1: [-2.8, 0.35, 0.1], end2: [-2.8, 0.45, 0.1] },
-    { start: [-1.5, 0.6, 0.1], mid: [-2.2, 0.6, 0.1], end1: [-2.8, 0.55, 0.1], end2: [-2.8, 0.65, 0.1] },
-    { start: [-1.5, 0.8, 0.1], mid: [-2.2, 0.8, 0.1], end1: [-2.8, 0.75, 0.1], end2: [-2.8, 0.85, 0.1] },
-    // Right side - forked (split at end), wider, farther apart
-    { start: [1.5, 0.4, 0.1], mid: [2.2, 0.4, 0.1], end1: [2.8, 0.35, 0.1], end2: [2.8, 0.45, 0.1] },
-    { start: [1.5, 0.6, 0.1], mid: [2.2, 0.6, 0.1], end1: [2.8, 0.55, 0.1], end2: [2.8, 0.65, 0.1] },
-    { start: [1.5, 0.8, 0.1], mid: [2.2, 0.8, 0.1], end1: [2.8, 0.75, 0.1], end2: [2.8, 0.85, 0.1] },
+    // Left side - NOT forked, just tilted apart, wider apart, bigger max
+    // Scaled to match SDF positions: whiskerL1 at y=1.8, whiskerL2 at y=1.2, whiskerL3 at y=0.6
+    { start: [-2.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0], end: [-4.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0] }, // Top - wider
+    { start: [-2.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0], end: [-4.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0] }, // Middle - wider
+    { start: [-2.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0], end: [-4.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0] }, // Bottom - wider
+    // Right side - NOT forked, just tilted apart, wider apart, bigger max
+    { start: [2.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0], end: [4.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0] }, // Top - wider
+    { start: [2.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0], end: [4.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0] }, // Middle - wider
+    { start: [2.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0], end: [4.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0] }, // Bottom - wider
   ], []);
 
   useFrame(() => {
@@ -581,39 +642,47 @@ const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotati
   return (
     <group ref={groupRef}>
       {whiskers.map((whisker, idx) => {
-        // Main line from start to mid
-        const mainPoints = [new THREE.Vector3(...whisker.start), new THREE.Vector3(...whisker.mid)];
-        const mainGeometry = new THREE.BufferGeometry().setFromPoints(mainPoints);
-        
-        // Fork 1 from mid to end1
-        const fork1Points = [new THREE.Vector3(...whisker.mid), new THREE.Vector3(...whisker.end1)];
-        const fork1Geometry = new THREE.BufferGeometry().setFromPoints(fork1Points);
-        
-        // Fork 2 from mid to end2
-        const fork2Points = [new THREE.Vector3(...whisker.mid), new THREE.Vector3(...whisker.end2)];
-        const fork2Geometry = new THREE.BufferGeometry().setFromPoints(fork2Points);
+        // Simple line, NOT forked, just tilted
+        const points = [new THREE.Vector3(...whisker.start), new THREE.Vector3(...whisker.end)];
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
         
         return (
-          <group key={idx}>
-            <primitive object={new THREE.Line(mainGeometry, new THREE.LineBasicMaterial({ color: COLORS.pearlWhite, linewidth: 4 }))} />
-            <primitive object={new THREE.Line(fork1Geometry, new THREE.LineBasicMaterial({ color: COLORS.pearlWhite, linewidth: 4 }))} />
-            <primitive object={new THREE.Line(fork2Geometry, new THREE.LineBasicMaterial({ color: COLORS.pearlWhite, linewidth: 4 }))} />
-          </group>
+          <primitive 
+            key={idx} 
+            object={new THREE.Line(
+              geometry, 
+              new THREE.LineBasicMaterial({ 
+                color: COLORS.darkGrey, // Same color as eyes
+                linewidth: 40 // Much thicker and wider - bigger max
+              })
+            )} 
+          />
         );
       })}
     </group>
   );
 };
 
-// Floating Objects Component
+// Floating Objects Component - Crystal glass, self-rotating
 const FloatingObjects: React.FC<{
   mouseRotation: { x: number; y: number };
   deviceRotation?: { x: number; y: number; z: number };
 }> = ({ mouseRotation, deviceRotation }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const objects = useMemo(() => generateFloatingObjects(25), []); // More floating objects
+  const objects = useMemo(() => generateFloatingObjects(60), []); // Many more floating objects
+  const rotationSpeeds = useMemo(() => 
+    objects.map(() => ({
+      x: (Math.random() - 0.5) * 0.01,
+      y: (Math.random() - 0.5) * 0.01,
+      z: (Math.random() - 0.5) * 0.01,
+    })),
+    [objects]
+  );
+  const meshRefs = useRef<Array<THREE.Mesh | null>>(objects.map(() => null));
+  const orbitalTimeRef = useRef(0);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
+    orbitalTimeRef.current += delta;
     if (groupRef.current) {
       if (deviceRotation) {
         groupRef.current.rotation.x = deviceRotation.x * 0.3;
@@ -623,6 +692,15 @@ const FloatingObjects: React.FC<{
       groupRef.current.rotation.y += mouseRotation.x * 0.02;
       groupRef.current.rotation.x += mouseRotation.y * 0.02;
     }
+    
+    // Self-rotate each object slowly
+    meshRefs.current.forEach((mesh, idx) => {
+      if (mesh && rotationSpeeds[idx]) {
+        mesh.rotation.x += rotationSpeeds[idx].x;
+        mesh.rotation.y += rotationSpeeds[idx].y;
+        mesh.rotation.z += rotationSpeeds[idx].z;
+      }
+    });
   });
 
   return (
@@ -630,7 +708,7 @@ const FloatingObjects: React.FC<{
       {objects.map((obj, idx) => {
         let geometry: THREE.BufferGeometry;
         if (obj.shape === 'sphere') {
-          geometry = new THREE.SphereGeometry(obj.size, 8, 8);
+          geometry = new THREE.SphereGeometry(obj.size, 16, 16);
         } else if (obj.shape === 'cube') {
           geometry = new THREE.BoxGeometry(obj.size, obj.size, obj.size);
         } else {
@@ -638,16 +716,32 @@ const FloatingObjects: React.FC<{
         }
 
         const color = new THREE.Color(obj.color);
-        color.multiplyScalar(0.6); // Desaturate
-
+        // Keep colors vibrant for crystal effect
+        const crystalColor = color.clone();
+        
+        // Calculate orbital position
+        const currentAngle = obj.orbitalAngle + orbitalTimeRef.current * obj.orbitalSpeed;
+        const orbitalX = Math.cos(currentAngle) * obj.orbitalRadius;
+        const orbitalZ = Math.sin(currentAngle) * obj.orbitalRadius;
+        
+        // Create crystal glass material: more transparent, highly reflective
         return (
-          <mesh key={idx} position={obj.position} geometry={geometry}>
+          <mesh 
+            key={idx} 
+            ref={(el) => { meshRefs.current[idx] = el; }}
+            position={[orbitalX, obj.verticalOffset, orbitalZ]} 
+            geometry={geometry}
+          >
             <meshStandardMaterial
-              color={color}
-              emissive={color}
-              emissiveIntensity={0.1}
-              metalness={0.3}
-              roughness={0.7}
+              color={crystalColor}
+              emissive={crystalColor}
+              emissiveIntensity={obj.glowIntensity * 0.8} // Slightly less glow for clarity
+              metalness={0.95} // Very high metalness for mirror-like reflection
+              roughness={0.05} // Very low roughness for crystal clarity
+              transparent={true}
+              opacity={0.3} // More transparent for crystal glass effect
+              envMapIntensity={2.5} // Very strong environment reflection
+              side={THREE.DoubleSide} // Render both sides for transparency
             />
           </mesh>
         );
@@ -675,6 +769,7 @@ const PhotoFrame: React.FC<{
 
   useEffect(() => {
     if (imageUrl) {
+      // Try loading with the URL as-is first
       loader.current.load(
         imageUrl,
         (loadedTexture) => {
@@ -684,9 +779,24 @@ const PhotoFrame: React.FC<{
         undefined,
         (error) => {
           console.warn(`Failed to load image ${imageUrl}:`, error);
-          setTexture(null);
+          // Try alternative path if direct load fails
+          const altUrl = imageUrl.replace('/src/', '/');
+          loader.current.load(
+            altUrl,
+            (loadedTexture) => {
+              loadedTexture.flipY = true;
+              setTexture(loadedTexture);
+            },
+            undefined,
+            (error2) => {
+              console.warn(`Failed to load image with alternative path ${altUrl}:`, error2);
+              setTexture(null);
+            }
+          );
         }
       );
+    } else {
+      setTexture(null);
     }
   }, [imageUrl]);
 
@@ -922,11 +1032,16 @@ const PhotoGallery: React.FC<{
   }, [isChaos, availableImages.length, onProgressChange, currentPhotoIndex]);
 
   const frames = useMemo(() => {
+    const totalImages = availableImages.length > 0 ? availableImages.length : photoCount;
     return Array.from({ length: photoCount }, (_, i) => {
       const angle = (i / photoCount) * Math.PI * 2;
       const imageInfo = imageData[i];
       const filename = imageInfo.path ? getFilename(imageInfo.path) : '';
-      const customText = descriptions[filename] || `Photo ${i + 1}`;
+      // Calculate photo number based on current index
+      const photoNumber = isChaos && i === currentPhotoIndex 
+        ? ((currentPhotoIndex % totalImages) + 1)
+        : ((i % totalImages) + 1);
+      const customText = descriptions[filename] || `Photo ${photoNumber} of ${totalImages}`;
       
       return {
         position: startPositions[i] || [0, 0, 0],
@@ -936,7 +1051,7 @@ const PhotoGallery: React.FC<{
         customText,
       };
     });
-  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions]);
+  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions, availableImages.length, photoCount]);
 
   return (
     <>
@@ -958,15 +1073,19 @@ const PhotoGallery: React.FC<{
 
 const CameraController: React.FC<{ isChaos: boolean }> = ({ isChaos }) => {
   const { camera } = useThree();
-  const targetZ = useRef(20); // Zoomed out more
+  const targetZ = useRef(18); // Closer to show face better
+  const targetY = useRef(1); // Slightly above center to show face
 
   useFrame(() => {
     if (isChaos) {
       targetZ.current = 10;
+      targetY.current = 0;
     } else {
-      targetZ.current = 20; // More zoomed out
+      targetZ.current = 18; // Closer to show face
+      targetY.current = 1; // Slightly above to show face
     }
     camera.position.z += (targetZ.current - camera.position.z) * 0.05;
+    camera.position.y += (targetY.current - camera.position.y) * 0.05;
   });
 
   return null;
@@ -978,22 +1097,27 @@ const Scene: React.FC<{
   deviceRotation?: { x: number; y: number; z: number };
   onProgressChange?: (progress: number) => void;
 }> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange }) => {
-  // Increased particle counts for denser appearance
-  const headCount = 2000;
+  // Increased particle counts for denser appearance, especially head
+  const headCount = 3000; // More orbs filling head space
   const bodyCount = 1800;
+  const earCount = 400; // Ears
   const clothesCount = 1200;
   const bowCount = 300;
   const noseCount = 80;
 
   const headTargets = useMemo(() => generateHelloKittyPositions(headCount, 'head'), []);
   const bodyTargets = useMemo(() => generateHelloKittyPositions(bodyCount, 'body'), []);
+  const earLeftTargets = useMemo(() => generateHelloKittyPositions(earCount, 'earLeft'), []);
+  const earRightTargets = useMemo(() => generateHelloKittyPositions(earCount, 'earRight'), []);
   const clothesTargets = useMemo(() => generateHelloKittyPositions(clothesCount, 'clothes'), []);
   const bowTargets = useMemo(() => generateHelloKittyPositions(bowCount, 'bow'), []);
   const eyeTargets = useMemo(() => generateEyePositions(), []);
-  const noseTargets = useMemo(() => generateHelloKittyPositions(noseCount, 'nose'), []);
+  const noseTargets = useMemo(() => generateNosePositions(noseCount), [noseCount]);
 
   const headPositions = useMemo(() => headTargets.slice(), [headTargets]);
   const bodyPositions = useMemo(() => bodyTargets.slice(), [bodyTargets]);
+  const earLeftPositions = useMemo(() => earLeftTargets.slice(), [earLeftTargets]);
+  const earRightPositions = useMemo(() => earRightTargets.slice(), [earRightTargets]);
   const clothesPositions = useMemo(() => clothesTargets.slice(), [clothesTargets]);
   const bowPositions = useMemo(() => bowTargets.slice(), [bowTargets]);
   const eyePositions = useMemo(() => eyeTargets.slice(), [eyeTargets]);
@@ -1025,8 +1149,31 @@ const Scene: React.FC<{
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.pearlWhite2}
-        emissiveColor={COLORS.pearlWhite3}
+        color={COLORS.pearlWhite}
+        emissiveColor={COLORS.pearlWhite2}
+        baseSize={0.1}
+      />
+
+      {/* Ears - Pearl Off-White Ivory */}
+      <HelloKittyParticle
+        positions={earLeftPositions}
+        targetPositions={earLeftTargets}
+        isChaos={isChaos}
+        mouseRotation={mouseRotation}
+        deviceRotation={deviceRotation}
+        color={COLORS.pearlWhite}
+        emissiveColor={COLORS.pearlWhite2}
+        baseSize={0.1}
+      />
+
+      <HelloKittyParticle
+        positions={earRightPositions}
+        targetPositions={earRightTargets}
+        isChaos={isChaos}
+        mouseRotation={mouseRotation}
+        deviceRotation={deviceRotation}
+        color={COLORS.pearlWhite}
+        emissiveColor={COLORS.pearlWhite2}
         baseSize={0.1}
       />
 
@@ -1047,8 +1194,8 @@ const Scene: React.FC<{
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.deepPink}
-        emissiveColor={COLORS.pink3}
+        color={COLORS.pink}
+        emissiveColor={COLORS.pink2}
         baseSize={0.12}
       />
 
@@ -1058,8 +1205,9 @@ const Scene: React.FC<{
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.black}
-        baseSize={0.25}
+        color={COLORS.darkGrey}
+        emissiveColor={COLORS.darkGreyGlow}
+        baseSize={1.0}
       />
 
       <HelloKittyParticle
@@ -1101,6 +1249,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mouseRotation, setMouseRotation] = useState({ x: 0, y: 0 });
+  const [targetMouseRotation, setTargetMouseRotation] = useState({ x: 0, y: 0 });
   const [deviceRotation, setDeviceRotation] = useState<{ x: number; y: number; z: number } | undefined>(undefined);
 
   useEffect(() => {
@@ -1123,8 +1272,20 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const x = (e.clientX / window.innerWidth) * 2 - 1;
     const y = (e.clientY / window.innerHeight) * 2 - 1;
-    setMouseRotation({ x, y });
+    setTargetMouseRotation({ x, y });
   }, []);
+
+  // Ease mouse rotation in and out
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMouseRotation((prev) => ({
+        x: prev.x + (targetMouseRotation.x - prev.x) * 0.1, // Ease in/out
+        y: prev.y + (targetMouseRotation.y - prev.y) * 0.1,
+      }));
+    }, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, [targetMouseRotation]);
 
   const handleMouseDown = useCallback(() => {
     setIsHolding(true);
@@ -1192,7 +1353,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         />
       </Canvas>
 
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center gap-3">
         <button
           className={`
             px-6 py-3 rounded-full text-sm font-bold
