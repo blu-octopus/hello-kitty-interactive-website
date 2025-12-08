@@ -49,7 +49,7 @@ describe('App', () => {
   it('should render the instruction text', () => {
     render(<App />)
     // The text is split across elements, so we use a more flexible matcher
-    const instructionText = screen.getByText((content, element) => {
+    const instructionText = screen.getByText((_content, element) => {
       return element?.textContent === 'Edit src/App.tsx and save to test HMR'
     })
     expect(instructionText).toBeInTheDocument()

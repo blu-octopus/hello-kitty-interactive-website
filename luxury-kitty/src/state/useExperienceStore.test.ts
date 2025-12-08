@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useExperienceStore, type MachineState } from './useExperienceStore'
+import { useExperienceStore } from './useExperienceStore'
 
 describe('useExperienceStore', () => {
   beforeEach(() => {
