@@ -58,11 +58,11 @@ const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boo
   // Body (Ellipsoid) - Centered at (0, -1.5, 0)
   const body = (Math.pow(x / 2.2, 2) + Math.pow((y + 1.5) / 2.8, 2) + Math.pow(z / 1.8, 2)) <= 1;
 
-  // Left Ear (Ellipsoid) - Tilted away from each other, extruded more, Centered at (3.2, 4.5, 0)
-  const earL = (Math.pow((x - 3.2) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow(z / 0.6, 2)) <= 1;
+  // Left Ear (Ellipsoid) - Tilted INWARD (toward each other), double the angle, Centered at (2.0, 4.5, 0.5)
+  const earL = (Math.pow((x - 2.0) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow((z - 0.5) / 0.6, 2)) <= 1;
 
-  // Right Ear (Ellipsoid) - Tilted away from each other, extruded more, Centered at (-3.2, 4.5, 0)
-  const earR = (Math.pow((x + 3.2) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow(z / 0.6, 2)) <= 1;
+  // Right Ear (Ellipsoid) - Tilted INWARD (toward each other), double the angle, Centered at (-2.0, 4.5, 0.5)
+  const earR = (Math.pow((x + 2.0) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow((z - 0.5) / 0.6, 2)) <= 1;
 
   // Left Arm (Ellipsoid) - Centered at (2.8, -0.5, 0.5)
   const armL = (Math.pow((x - 2.8) / 0.8, 2) + Math.pow((y + 0.5) / 1.5, 2) + Math.pow((z - 0.5) / 0.8, 2)) <= 1;
@@ -78,28 +78,30 @@ const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boo
 
   // --- B. Facial Features ---
   
-  // Dark Grey Eyes (Much Bigger Spheres) - same z axis as nose
-  const eyeR = (Math.pow((x - 1.2) / 0.7, 2) + Math.pow((y - 2.5) / 0.7, 2) + Math.pow((z - 2.0) / 0.7, 2)) <= 1;
-  const eyeL = (Math.pow((x + 1.2) / 0.7, 2) + Math.pow((y - 2.5) / 0.7, 2) + Math.pow((z - 2.0) / 0.7, 2)) <= 1;
+  // Dark Grey Eyes (OVAL/ELLIPSOID - wider horizontally) - same z axis as nose, more visible
+  const eyeR = (Math.pow((x - 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
+  const eyeL = (Math.pow((x + 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
 
-  // Yellow Nose (Small Ellipsoid/Sphere) - z axis at 2.0
+  // Yellow Nose (Small Ellipsoid/Sphere) - closer to head center (z=1.2)
   const nose = (Math.pow(x / 0.5, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
 
-  // Dark Grey Whiskers (Much thicker and wider ellipsoids) - bigger max
-  // Right Whiskers (3 segments) - thicker and wider
-  const whiskerR1 = (Math.pow((x - 2.0) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
-  const whiskerR2 = (Math.pow((x - 2.2) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
-  const whiskerR3 = (Math.pow((x - 2.0) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  // Dark Grey Whiskers (Much thicker and wider ellipsoids) - closer to head center (z=1.2)
+  // Right Whiskers (3 segments)
+  const whiskerR1 = (Math.pow((x - 1.5) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
+  const whiskerR2 = (Math.pow((x - 1.6) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
+  const whiskerR3 = (Math.pow((x - 1.5) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
 
-  // Left Whiskers (3 segments, symmetric) - thicker and wider
-  const whiskerL1 = (Math.pow((x + 2.0) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
-  const whiskerL2 = (Math.pow((x + 2.2) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
-  const whiskerL3 = (Math.pow((x + 2.0) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 2.0) / 2.0, 2)) <= 1;
+  // Left Whiskers (3 segments, symmetric)
+  const whiskerL1 = (Math.pow((x + 1.5) / 0.4, 2) + Math.pow((y - 1.8) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
+  const whiskerL2 = (Math.pow((x + 1.6) / 0.4, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
+  const whiskerL3 = (Math.pow((x + 1.5) / 0.4, 2) + Math.pow((y - 0.6) / 0.4, 2) + Math.pow((z - 1.2) / 1.8, 2)) <= 1;
 
   // --- C. Clothing (Pink) ---
   
   // Pink Shirt/Dress (Covers the upper body, slightly larger than the body primitive)
-  const shirt = (Math.pow(x / 2.5, 2) + Math.pow((y + 1.5) / 3.0, 2) + Math.pow(z / 2.0, 2)) <= 1;
+  // For surface-only generation, we check if point is near the surface (within a small threshold)
+  const shirtDist = Math.sqrt(Math.pow(x / 2.5, 2) + Math.pow((y + 1.5) / 3.0, 2) + Math.pow(z / 2.0, 2));
+  const shirt = shirtDist >= 0.95 && shirtDist <= 1.05; // Surface only (within 5% threshold)
 
   // Pink Bow (Simple sphere approximation)
   const bowCenter = (Math.pow((x - 3.0) / 0.5, 2) + Math.pow((y - 3.5) / 0.5, 2) + Math.pow(z / 0.5, 2)) <= 1;
@@ -173,21 +175,46 @@ const generateEyePositions = (): Float32Array => {
   return positions;
 };
 
-// Generate nose positions - based on new ellipsoid
-const generateNosePositions = (count: number): Float32Array => {
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    // Generate positions inside the nose ellipsoid
-    const angle1 = Math.random() * Math.PI * 2;
-    const angle2 = Math.random() * Math.PI;
-    const radius = Math.random() * 0.5; // Nose radius
-    
-    positions[i * 3] = radius * Math.sin(angle2) * Math.cos(angle1);
-    positions[i * 3 + 1] = 1.2 + radius * Math.cos(angle2) * 0.4;
-    positions[i * 3 + 2] = 2.0 + radius * Math.sin(angle2) * Math.sin(angle1) * 0.5;
-  }
-  return positions;
-};
+// Clothes generation disabled
+// const generateClothesSurfacePositions = (count: number): Float32Array => {
+//   const positions = new Float32Array(count * 3);
+//   let validCount = 0;
+//   const maxAttempts = count * 200;
+//   let attempts = 0;
+//   while (validCount < count && attempts < maxAttempts) {
+//     attempts++;
+//     const u = Math.random();
+//     const v = Math.random();
+//     const theta = u * Math.PI * 2;
+//     const phi = Math.acos(2 * v - 1);
+//     const a = 2.5;
+//     const b = 3.0;
+//     const c = 2.0;
+//     const x = a * Math.sin(phi) * Math.cos(theta);
+//     const y = b * Math.sin(phi) * Math.sin(theta) - 1.5;
+//     const z = c * Math.cos(phi);
+//     if (isInsideHelloKitty(x, y, z, 'clothes')) {
+//       positions[validCount * 3] = x;
+//       positions[validCount * 3 + 1] = y;
+//       positions[validCount * 3 + 2] = z;
+//       validCount++;
+//     }
+//   }
+//   while (validCount < count) {
+//     const u = Math.random();
+//     const v = Math.random();
+//     const theta = u * Math.PI * 2;
+//     const phi = Math.acos(2 * v - 1);
+//     const a = 2.5;
+//     const b = 3.0;
+//     const c = 2.0;
+//     positions[validCount * 3] = a * Math.sin(phi) * Math.cos(theta);
+//     positions[validCount * 3 + 1] = b * Math.sin(phi) * Math.sin(theta) - 1.5;
+//     positions[validCount * 3 + 2] = c * Math.cos(phi);
+//     validCount++;
+//   }
+//   return positions;
+// };
 
 // Generate positions for arms (filled with particles)
 const generateArmPositions = (count: number, side: 'left' | 'right'): Float32Array => {
@@ -297,11 +324,11 @@ const generateFloatingObjects = (count: number): Array<{
   const shapes: Array<'sphere' | 'cube' | 'tetrahedron'> = ['sphere', 'cube', 'tetrahedron'];
 
   for (let i = 0; i < count; i++) {
-    // Orbital position around Hello Kitty
+    // Orbital position around Hello Kitty - fill whole space
     const baseAngle = (i / count) * Math.PI * 2; // Evenly distributed around
-    const orbitalRadius = 15 + Math.random() * 5; // 15-20 units away
+    const orbitalRadius = 12 + Math.random() * 25; // 12-37 units away - much wider range
     const orbitalSpeed = 0.2 + Math.random() * 0.3; // Varying orbital speeds
-    const verticalOffset = (Math.random() - 0.5) * 8; // Vertical variation
+    const verticalOffset = (Math.random() - 0.5) * 20; // Much more vertical variation
     
     // Base size with 50% variation (if base is 0.4, range is 0.2-0.6)
     const baseSize = 0.3;
@@ -459,9 +486,10 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
-          metalness={0.7}
-          roughness={0.2}
+          emissiveIntensity={color === COLORS.darkGrey ? 2.5 : 0.8}
+          metalness={0.8}
+          roughness={0.15}
+          envMapIntensity={1.5}
         />
       </instancedMesh>
       {/* Cubes */}
@@ -469,9 +497,10 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
-          metalness={0.7}
-          roughness={0.2}
+          emissiveIntensity={color === COLORS.darkGrey ? 2.5 : 0.8}
+          metalness={0.8}
+          roughness={0.15}
+          envMapIntensity={1.5}
         />
       </instancedMesh>
       {/* Tetrahedrons */}
@@ -479,9 +508,10 @@ const HelloKittyParticle: React.FC<{
         <meshStandardMaterial
           color={color}
           emissive={emissiveColor || color}
-          emissiveIntensity={color === COLORS.darkGrey ? 1.2 : 0.4}
-          metalness={0.7}
-          roughness={0.2}
+          emissiveIntensity={color === COLORS.darkGrey ? 2.5 : 0.8}
+          metalness={0.8}
+          roughness={0.15}
+          envMapIntensity={1.5}
         />
       </instancedMesh>
     </group>
@@ -612,20 +642,215 @@ const Legs: React.FC<{
   );
 };
 
-// Whiskers Component - NOT forked, just tilted apart, thicker, bigger, same color as eyes
+// Eyes Component - Oval/ellipsoid shape, grey, glowing
+const Eyes: React.FC<{
+  eyePositions: Float32Array;
+  eyeTargets: Float32Array;
+  isChaos: boolean;
+  mouseRotation: { x: number; y: number };
+  deviceRotation?: { x: number; y: number; z: number };
+}> = ({ eyePositions, eyeTargets, isChaos, mouseRotation, deviceRotation }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const leftEyeRef = useRef<THREE.Mesh>(null);
+  const rightEyeRef = useRef<THREE.Mesh>(null);
+  const leftEyePos = useRef<THREE.Vector3>(new THREE.Vector3(eyePositions[0], eyePositions[1], eyePositions[2]));
+  const rightEyePos = useRef<THREE.Vector3>(new THREE.Vector3(eyePositions[3], eyePositions[4], eyePositions[5]));
+  const leftEyeTarget = useRef<THREE.Vector3>(new THREE.Vector3(eyeTargets[0], eyeTargets[1], eyeTargets[2]));
+  const rightEyeTarget = useRef<THREE.Vector3>(new THREE.Vector3(eyeTargets[3], eyeTargets[4], eyeTargets[5]));
+  const chaosTime = useRef(0);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      if (deviceRotation) {
+        groupRef.current.rotation.x = deviceRotation.x * 0.5;
+        groupRef.current.rotation.y = deviceRotation.y * 0.5;
+        groupRef.current.rotation.z = deviceRotation.z * 0.3;
+      }
+      groupRef.current.rotation.y += mouseRotation.x * 0.05;
+      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+    }
+
+    if (isChaos) {
+      chaosTime.current += delta * 0.3;
+    } else {
+      chaosTime.current = Math.max(0, chaosTime.current - delta * 0.5);
+    }
+
+    const easedTime = easeInOutCubic(Math.min(chaosTime.current, 1));
+    const lerpSpeed = isChaos ? 0.008 * easedTime : 0.05;
+
+    // Update left eye position
+    leftEyeTarget.current.set(eyeTargets[0], eyeTargets[1], eyeTargets[2]);
+    if (isChaos) {
+      const chaosRadius = 15 * easedTime;
+      const angle = chaosTime.current;
+      leftEyeTarget.current.x += Math.cos(angle) * chaosRadius;
+      leftEyeTarget.current.y += Math.sin(angle * 2) * chaosRadius;
+      leftEyeTarget.current.z += Math.sin(angle * 3) * chaosRadius;
+    }
+    leftEyePos.current.lerp(leftEyeTarget.current, lerpSpeed);
+
+    // Update right eye position
+    rightEyeTarget.current.set(eyeTargets[3], eyeTargets[4], eyeTargets[5]);
+    if (isChaos) {
+      const chaosRadius = 15 * easedTime;
+      const angle = chaosTime.current + Math.PI;
+      rightEyeTarget.current.x += Math.cos(angle) * chaosRadius;
+      rightEyeTarget.current.y += Math.sin(angle * 2) * chaosRadius;
+      rightEyeTarget.current.z += Math.sin(angle * 3) * chaosRadius;
+    }
+    rightEyePos.current.lerp(rightEyeTarget.current, lerpSpeed);
+
+    if (leftEyeRef.current) {
+      leftEyeRef.current.position.copy(leftEyePos.current);
+    }
+    if (rightEyeRef.current) {
+      rightEyeRef.current.position.copy(rightEyePos.current);
+    }
+  });
+
+  // Create ellipsoid geometry for oval eyes (wider horizontally)
+  const eyeGeometry = useMemo(() => {
+    return new THREE.SphereGeometry(1, 16, 16);
+  }, []);
+
+  return (
+    <group ref={groupRef}>
+      {/* Left Eye - Oval shape, 30% smaller, rotated 90 degrees on z axis */}
+      <mesh ref={leftEyeRef} geometry={eyeGeometry} scale={[0.35, 0.245, 0.21]} rotation={[0, 0, Math.PI / 2]}>
+        <meshStandardMaterial
+          color={COLORS.darkGrey}
+          emissive={COLORS.darkGreyGlow}
+          emissiveIntensity={2.5}
+          metalness={0.8}
+          roughness={0.15}
+        />
+      </mesh>
+      {/* Right Eye - Oval shape, 30% smaller, rotated 90 degrees on z axis */}
+      <mesh ref={rightEyeRef} geometry={eyeGeometry} scale={[0.35, 0.245, 0.21]} rotation={[0, 0, Math.PI / 2]}>
+        <meshStandardMaterial
+          color={COLORS.darkGrey}
+          emissive={COLORS.darkGreyGlow}
+          emissiveIntensity={2.5}
+          metalness={0.8}
+          roughness={0.15}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+// Nose Component - Single oval orb
+const Nose: React.FC<{
+  nosePosition: [number, number, number];
+  isChaos: boolean;
+  mouseRotation: { x: number; y: number };
+  deviceRotation?: { x: number; y: number; z: number };
+}> = ({ nosePosition, isChaos, mouseRotation, deviceRotation }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const noseRef = useRef<THREE.Mesh>(null);
+  const nosePos = useRef<THREE.Vector3>(new THREE.Vector3(...nosePosition));
+  const noseTarget = useRef<THREE.Vector3>(new THREE.Vector3(...nosePosition));
+  const chaosTime = useRef(0);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      if (deviceRotation) {
+        groupRef.current.rotation.x = deviceRotation.x * 0.5;
+        groupRef.current.rotation.y = deviceRotation.y * 0.5;
+        groupRef.current.rotation.z = deviceRotation.z * 0.3;
+      }
+      groupRef.current.rotation.y += mouseRotation.x * 0.05;
+      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+    }
+
+    if (isChaos) {
+      chaosTime.current += delta * 0.3;
+    } else {
+      chaosTime.current = Math.max(0, chaosTime.current - delta * 0.5);
+    }
+
+    const easedTime = easeInOutCubic(Math.min(chaosTime.current, 1));
+    const lerpSpeed = isChaos ? 0.008 * easedTime : 0.05;
+
+    // Update nose position
+    noseTarget.current.set(...nosePosition);
+    if (isChaos) {
+      const chaosRadius = 15 * easedTime;
+      const angle = chaosTime.current * 1.5;
+      noseTarget.current.x += Math.cos(angle) * chaosRadius;
+      noseTarget.current.y += Math.sin(angle * 2) * chaosRadius;
+      noseTarget.current.z += Math.sin(angle * 3) * chaosRadius;
+    }
+    nosePos.current.lerp(noseTarget.current, lerpSpeed);
+
+    if (noseRef.current) {
+      noseRef.current.position.copy(nosePos.current);
+    }
+  });
+
+  const noseGeometry = useMemo(() => {
+    return new THREE.SphereGeometry(1, 16, 16);
+  }, []);
+
+  return (
+    <group ref={groupRef}>
+      <mesh ref={noseRef} geometry={noseGeometry} scale={[0.35, 0.28, 0.35]}>
+        <meshStandardMaterial
+          color={COLORS.yellow}
+          emissive={COLORS.yellow2}
+          emissiveIntensity={1.2}
+          metalness={0.95}
+          roughness={0.05}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+// Whiskers Component - Volume cylinders, shorter, closer together, starting on surface of head
 const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotation?: { x: number; y: number; z: number } }> = ({ mouseRotation, deviceRotation }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const whiskers = useMemo(() => [
-    // Left side - NOT forked, just tilted apart, wider apart, bigger max
-    // Scaled to match SDF positions: whiskerL1 at y=1.8, whiskerL2 at y=1.2, whiskerL3 at y=0.6
-    { start: [-2.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0], end: [-4.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0] }, // Top - wider
-    { start: [-2.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0], end: [-4.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0] }, // Middle - wider
-    { start: [-2.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0], end: [-4.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0] }, // Bottom - wider
-    // Right side - NOT forked, just tilted apart, wider apart, bigger max
-    { start: [2.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0], end: [4.0 * 3.0, (1.8 * 3.0), 2.0 * 3.0] }, // Top - wider
-    { start: [2.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0], end: [4.2 * 3.0, (1.2 * 3.0), 2.0 * 3.0] }, // Middle - wider
-    { start: [2.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0], end: [4.0 * 3.0, (0.6 * 3.0), 2.0 * 3.0] }, // Bottom - wider
-  ], []);
+  const whiskers = useMemo(() => {
+    // Shorter length and closer together
+    const whiskerLength = 1.4; // Shorter whiskers
+    const baseY = 1.4; // Middle whisker y position
+    const ySpacing = 0.4; // Closer together (reduced from 0.6)
+    const startX = 2.0; // Start point closer to face (inside)
+    const zPos = 1.6;
+    // Rotation angle: 10 degrees = 0.1745 radians
+    const angle = 10 * (Math.PI / 180);
+    
+    // Calculate rotated end points
+    // Top whisker: rotate up (increase y)
+    const topStartX = startX;
+    const topStartY = baseY + ySpacing;
+    const topEndX = startX + whiskerLength * Math.cos(angle);
+    const topEndY = topStartY + whiskerLength * Math.sin(angle);
+    
+    // Middle whisker: straight (no rotation)
+    const midStartX = startX;
+    const midStartY = baseY;
+    const midEndX = startX + whiskerLength;
+    const midEndY = midStartY;
+    
+    // Bottom whisker: rotate down (decrease y)
+    const botStartX = startX;
+    const botStartY = baseY - ySpacing;
+    const botEndX = startX + whiskerLength * Math.cos(angle);
+    const botEndY = botStartY - whiskerLength * Math.sin(angle);
+    
+    return [
+      // Left side - start inside, spread outward with rotation
+      { start: [-topStartX, topStartY, zPos], end: [-topEndX, topEndY, zPos] }, // Top - rotated up
+      { start: [-midStartX, midStartY, zPos], end: [-midEndX, midEndY, zPos] }, // Middle - straight
+      { start: [-botStartX, botStartY, zPos], end: [-botEndX, botEndY, zPos] }, // Bottom - rotated down
+      // Right side - symmetric
+      { start: [topStartX, topStartY, zPos], end: [topEndX, topEndY, zPos] }, // Top - rotated up
+      { start: [midStartX, midStartY, zPos], end: [midEndX, midEndY, zPos] }, // Middle - straight
+      { start: [botStartX, botStartY, zPos], end: [botEndX, botEndY, zPos] }, // Bottom - rotated down
+    ];
+  }, []);
 
   useFrame(() => {
     if (groupRef.current) {
@@ -642,22 +867,32 @@ const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotati
   return (
     <group ref={groupRef}>
       {whiskers.map((whisker, idx) => {
-        // Simple line, NOT forked, just tilted
-        const points = [new THREE.Vector3(...whisker.start), new THREE.Vector3(...whisker.end)];
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        // Create cylinder geometry for volume (thick radius)
+        const start = new THREE.Vector3(...whisker.start);
+        const end = new THREE.Vector3(...whisker.end);
+        const direction = new THREE.Vector3().subVectors(end, start);
+        const length = direction.length();
+        const radius = 0.08; // Thinner whiskers
         
-        return (
-          <primitive 
-            key={idx} 
-            object={new THREE.Line(
-              geometry, 
-              new THREE.LineBasicMaterial({ 
-                color: COLORS.darkGrey, // Same color as eyes
-                linewidth: 40 // Much thicker and wider - bigger max
-              })
-            )} 
-          />
-        );
+        // Create cylinder geometry
+        const geometry = new THREE.CylinderGeometry(radius, radius, length, 8);
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+          color: COLORS.darkGrey,
+          emissive: COLORS.darkGreyGlow,
+          emissiveIntensity: 1.5,
+          metalness: 0.7,
+          roughness: 0.2,
+        }));
+        
+        // Position and orient the cylinder
+        const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+        mesh.position.copy(center);
+        
+        // Orient cylinder along the direction vector
+        mesh.lookAt(end);
+        mesh.rotateX(Math.PI / 2);
+        
+        return <primitive key={idx} object={mesh} />;
       })}
     </group>
   );
@@ -669,7 +904,7 @@ const FloatingObjects: React.FC<{
   deviceRotation?: { x: number; y: number; z: number };
 }> = ({ mouseRotation, deviceRotation }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const objects = useMemo(() => generateFloatingObjects(60), []); // Many more floating objects
+  const objects = useMemo(() => generateFloatingObjects(150), []); // Fill whole space with floating objects
   const rotationSpeeds = useMemo(() => 
     objects.map(() => ({
       x: (Math.random() - 0.5) * 0.01,
@@ -757,9 +992,10 @@ const PhotoFrame: React.FC<{
   imageUrl?: string;
   isZoomed: boolean;
   customText?: string;
+  personalizedMessage?: string;
   mouseRotation: { x: number; y: number };
   deviceRotation?: { x: number; y: number; z: number };
-}> = ({ position, rotation, imageUrl, isZoomed, customText, mouseRotation, deviceRotation }) => {
+}> = ({ position, rotation, imageUrl, isZoomed, customText, personalizedMessage, mouseRotation, deviceRotation }) => {
   const frameRef = useRef<THREE.Group>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const loader = useRef(new THREE.TextureLoader());
@@ -769,33 +1005,43 @@ const PhotoFrame: React.FC<{
 
   useEffect(() => {
     if (imageUrl) {
-      // Try loading with the URL as-is first
+      console.log('Loading polaroid image:', imageUrl);
+      // Use the URL directly from import.meta.glob - it should be a valid path
       loader.current.load(
         imageUrl,
         (loadedTexture) => {
-          loadedTexture.flipY = true; // Right side up
+          console.log('Successfully loaded image:', imageUrl);
+          loadedTexture.flipY = false; // Keep original orientation
+          loadedTexture.colorSpace = THREE.SRGBColorSpace;
           setTexture(loadedTexture);
         },
         undefined,
         (error) => {
           console.warn(`Failed to load image ${imageUrl}:`, error);
-          // Try alternative path if direct load fails
-          const altUrl = imageUrl.replace('/src/', '/');
-          loader.current.load(
-            altUrl,
-            (loadedTexture) => {
-              loadedTexture.flipY = true;
-              setTexture(loadedTexture);
-            },
-            undefined,
-            (error2) => {
-              console.warn(`Failed to load image with alternative path ${altUrl}:`, error2);
-              setTexture(null);
-            }
-          );
+          // Try alternative: use the URL as-is but ensure it's a valid path
+          const altUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+          if (altUrl !== imageUrl) {
+            loader.current.load(
+              altUrl,
+              (loadedTexture) => {
+                console.log('Successfully loaded image with alt path:', altUrl);
+                loadedTexture.flipY = false;
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                setTexture(loadedTexture);
+              },
+              undefined,
+              (error2) => {
+                console.error('Failed to load image with alternative path:', error2);
+                setTexture(null);
+              }
+            );
+          } else {
+            setTexture(null);
+          }
         }
       );
     } else {
+      console.warn('No imageUrl provided for polaroid');
       setTexture(null);
     }
   }, [imageUrl]);
@@ -860,16 +1106,36 @@ const PhotoFrame: React.FC<{
         <boxGeometry args={[frameWidth, frameHeight, 0.05]} />
         <meshStandardMaterial color={COLORS.white} emissive={COLORS.white} emissiveIntensity={0} />
       </mesh>
-      {/* Photo Area - front side */}
+      {/* Photo Area - front side - ensure white background and image visible */}
       <mesh position={[0, 0.15, 0.03]}>
         <planeGeometry args={[photoWidth, photoHeight]} />
         <meshStandardMaterial
           map={texture || null}
-          color={COLORS.white}
+          color={texture ? COLORS.white : '#F5F5F5'}
           emissive={COLORS.white}
           emissiveIntensity={0}
+          side={THREE.DoubleSide}
+          transparent={false}
         />
       </mesh>
+      {/* Debug: Show if texture is loaded */}
+      {!texture && imageUrl && (
+        <Html position={[0, 0.15, 0.04]} center>
+          <div style={{ 
+            width: `${photoWidth * 100}px`, 
+            height: `${photoHeight * 100}px`,
+            backgroundColor: '#F5F5F5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '10px',
+            color: '#999',
+            border: '1px solid #ddd'
+          }}>
+            {imageUrl ? 'Loading image...' : 'No image'}
+          </div>
+        </Html>
+      )}
       {/* Back Side - Solid Color */}
       <mesh position={[0, 0, -0.05]}>
         <planeGeometry args={[frameWidth, frameHeight]} />
@@ -880,23 +1146,48 @@ const PhotoFrame: React.FC<{
         <planeGeometry args={[photoWidth, 0.2]} />
         <meshStandardMaterial color={COLORS.white} emissive={COLORS.white} emissiveIntensity={0} />
       </mesh>
-      {/* Custom text label when zoomed */}
+      {/* Custom text label when zoomed - wider to fit all text */}
       {isZoomed && customText && (
         <Html position={[0, -0.9, 0.06]} center>
           <div style={{
-            width: `${photoWidth * 100}px`,
+            width: `${photoWidth * 120}px`,
+            maxWidth: `${photoWidth * 120}px`,
+            minWidth: `${photoWidth * 100}px`,
             textAlign: 'center',
             fontSize: '12px',
             color: 'black',
             fontWeight: 'bold',
-            padding: '4px 8px',
+            padding: '6px 10px',
             backgroundColor: 'white',
             borderRadius: '4px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            whiteSpace: 'normal',
           }}>
             {customText}
+          </div>
+        </Html>
+      )}
+      {/* Personalized message on polaroid */}
+      {isZoomed && personalizedMessage && (
+        <Html position={[0, -1.15, 0.06]} center>
+          <div style={{
+            width: `${photoWidth * 120}px`,
+            maxWidth: `${photoWidth * 120}px`,
+            minWidth: `${photoWidth * 100}px`,
+            textAlign: 'center',
+            fontSize: '11px',
+            color: '#666',
+            fontStyle: 'italic',
+            padding: '4px 8px',
+            backgroundColor: '#FFF9E6',
+            borderRadius: '4px',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            whiteSpace: 'normal',
+            marginTop: '4px',
+          }}>
+            {personalizedMessage}
           </div>
         </Html>
       )}
@@ -925,26 +1216,33 @@ const loadGalleryImages = () => {
   }
 };
 
-// Load photo descriptions from JSON
-const loadPhotoDescriptions = async (): Promise<Record<string, string>> => {
+// Load photo descriptions and personalized messages from JSON
+const loadPhotoDescriptions = async (): Promise<{ descriptions: Record<string, string>; personalizedMessages: Record<string, string> }> => {
   try {
     // Try to load JSON file
     const response = await fetch('/src/assets/images/photoDescriptions.json');
     if (response.ok) {
       const data = await response.json();
-      return data.descriptions || {};
+      return {
+        descriptions: data.descriptions || {},
+        personalizedMessages: data.personalizedMessages || {},
+      };
     }
   } catch (e) {
     // If fetch fails, try import (for Vite dev server)
     try {
       // @ts-ignore
       const descriptionsModule = await import('/src/assets/images/photoDescriptions.json');
-      return descriptionsModule.default?.descriptions || descriptionsModule.descriptions || {};
+      const data = descriptionsModule.default || descriptionsModule;
+      return {
+        descriptions: data.descriptions || {},
+        personalizedMessages: data.personalizedMessages || {},
+      };
     } catch (importError) {
       console.warn('Could not load photo descriptions:', e, importError);
     }
   }
-  return {};
+  return { descriptions: {}, personalizedMessages: {} };
 };
 
 // Get filename from path
@@ -958,11 +1256,13 @@ const PhotoGallery: React.FC<{
   mouseRotation: { x: number; y: number };
   deviceRotation?: { x: number; y: number; z: number };
   onProgressChange?: (progress: number) => void;
-}> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange }) => {
+  onPhotoChange?: (photoIndex: number) => void;
+}> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange, onPhotoChange }) => {
   const photoCount = 40;
   const availableImages = useMemo(() => loadGalleryImages(), []);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+  const [personalizedMessages, setPersonalizedMessages] = useState<Record<string, string>>({});
   const [, setProgress] = useState(0);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const photoStartTime = useRef<number | null>(null);
@@ -970,9 +1270,12 @@ const PhotoGallery: React.FC<{
 
   const startPositions = useMemo(() => generatePolaroidStartPositions(photoCount), []);
   
-  // Load descriptions on mount
+  // Load descriptions and personalized messages on mount
   useEffect(() => {
-    loadPhotoDescriptions().then(setDescriptions);
+    loadPhotoDescriptions().then((data) => {
+      setDescriptions(data.descriptions);
+      setPersonalizedMessages(data.personalizedMessages);
+    });
   }, []);
   
   const imageData = useMemo(() => {
@@ -1007,11 +1310,21 @@ const PhotoGallery: React.FC<{
             setCurrentPhotoIndex((prev) => {
               const next = (prev + 1) % availableImages.length;
               lastPhotoIndexRef.current = next;
+              // Play transition woosh sound with pitch progression
+              onPhotoChange?.(next);
               return next;
             });
             photoStartTime.current = Date.now();
             setProgress(0);
             onProgressChange?.(0);
+          }
+          
+          // Play transitional buildup when progress is high
+          if (newProgress > 0.7 && newProgress < 0.95) {
+            // Trigger buildup sound (only once per transition)
+            if (Math.floor(newProgress * 10) === 7) {
+              onPhotoChange?.(currentPhotoIndex);
+            }
           }
         }
       };
@@ -1042,6 +1355,7 @@ const PhotoGallery: React.FC<{
         ? ((currentPhotoIndex % totalImages) + 1)
         : ((i % totalImages) + 1);
       const customText = descriptions[filename] || `Photo ${photoNumber} of ${totalImages}`;
+      const personalizedMessage = personalizedMessages[filename] || '';
       
       return {
         position: startPositions[i] || [0, 0, 0],
@@ -1049,9 +1363,10 @@ const PhotoGallery: React.FC<{
         imageUrl: imageInfo.url,
         isZoomed: isChaos && i === currentPhotoIndex,
         customText,
+        personalizedMessage,
       };
     });
-  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions, availableImages.length, photoCount]);
+  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions, personalizedMessages, availableImages.length, photoCount]);
 
   return (
     <>
@@ -1063,6 +1378,7 @@ const PhotoGallery: React.FC<{
           imageUrl={frame.imageUrl}
           isZoomed={frame.isZoomed}
           customText={frame.customText}
+          personalizedMessage={frame.personalizedMessage}
           mouseRotation={mouseRotation}
           deviceRotation={deviceRotation}
         />
@@ -1096,41 +1412,73 @@ const Scene: React.FC<{
   mouseRotation: { x: number; y: number };
   deviceRotation?: { x: number; y: number; z: number };
   onProgressChange?: (progress: number) => void;
-}> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange }) => {
+  onPhotoChange?: (photoIndex: number) => void;
+}> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange, onPhotoChange }) => {
   // Increased particle counts for denser appearance, especially head
   const headCount = 3000; // More orbs filling head space
   const bodyCount = 1800;
   const earCount = 400; // Ears
-  const clothesCount = 1200;
+  // const clothesCount = 1200; // clothes disabled
   const bowCount = 300;
-  const noseCount = 80;
 
   const headTargets = useMemo(() => generateHelloKittyPositions(headCount, 'head'), []);
   const bodyTargets = useMemo(() => generateHelloKittyPositions(bodyCount, 'body'), []);
   const earLeftTargets = useMemo(() => generateHelloKittyPositions(earCount, 'earLeft'), []);
   const earRightTargets = useMemo(() => generateHelloKittyPositions(earCount, 'earRight'), []);
-  const clothesTargets = useMemo(() => generateHelloKittyPositions(clothesCount, 'clothes'), []);
+  // const clothesTargets = useMemo(() => generateClothesSurfacePositions(clothesCount), []);
   const bowTargets = useMemo(() => generateHelloKittyPositions(bowCount, 'bow'), []);
   const eyeTargets = useMemo(() => generateEyePositions(), []);
-  const noseTargets = useMemo(() => generateNosePositions(noseCount), [noseCount]);
 
   const headPositions = useMemo(() => headTargets.slice(), [headTargets]);
   const bodyPositions = useMemo(() => bodyTargets.slice(), [bodyTargets]);
   const earLeftPositions = useMemo(() => earLeftTargets.slice(), [earLeftTargets]);
   const earRightPositions = useMemo(() => earRightTargets.slice(), [earRightTargets]);
-  const clothesPositions = useMemo(() => clothesTargets.slice(), [clothesTargets]);
+  // const clothesPositions = useMemo(() => clothesTargets.slice(), [clothesTargets]);
   const bowPositions = useMemo(() => bowTargets.slice(), [bowTargets]);
   const eyePositions = useMemo(() => eyeTargets.slice(), [eyeTargets]);
-  const nosePositions = useMemo(() => noseTargets.slice(), [noseTargets]);
 
   return (
     <>
       <color attach="background" args={['#000000']} />
       <CameraController isChaos={isChaos} />
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[10, 10, 5]} intensity={1.2} color={COLORS.gold} />
-      <pointLight position={[-10, 5, -5]} intensity={0.6} color={COLORS.pink} />
-      <pointLight position={[0, 0, 10]} intensity={0.5} color={COLORS.pearlWhite} />
+      {/* Deep space lighting with bounce/reflective light */}
+      <ambientLight intensity={0.2} />
+      {/* Main light from Hello Kitty (emissive glow source) */}
+      <pointLight 
+        position={[0, 0, 0]} 
+        intensity={2.5} 
+        color={COLORS.pink2}
+        distance={50}
+        decay={2}
+      />
+      {/* Bounce lights from surrounding objects */}
+      <pointLight 
+        position={[15, 10, 10]} 
+        intensity={0.8} 
+        color={COLORS.gold}
+        distance={30}
+        decay={2}
+      />
+      <pointLight 
+        position={[-15, 10, -10]} 
+        intensity={0.8} 
+        color={COLORS.pink}
+        distance={30}
+        decay={2}
+      />
+      <pointLight 
+        position={[0, -10, 15]} 
+        intensity={0.6} 
+        color={COLORS.pearlWhite2}
+        distance={25}
+        decay={2}
+      />
+      {/* Directional light for depth */}
+      <directionalLight position={[10, 10, 5]} intensity={0.8} color={COLORS.gold} />
+      {/* Hemisphere light for ambient bounce */}
+      <hemisphereLight 
+        args={[COLORS.pink2, COLORS.darkGrey, 0.4]} 
+      />
 
       <HelloKittyParticle
         positions={headPositions}
@@ -1149,8 +1497,8 @@ const Scene: React.FC<{
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.pearlWhite}
-        emissiveColor={COLORS.pearlWhite2}
+        color={COLORS.pink}
+        emissiveColor={COLORS.pink2}
         baseSize={0.1}
       />
 
@@ -1177,7 +1525,8 @@ const Scene: React.FC<{
         baseSize={0.1}
       />
 
-      <HelloKittyParticle
+      {/* Clothes rendering disabled */}
+      {/* <HelloKittyParticle
         positions={clothesPositions}
         targetPositions={clothesTargets}
         isChaos={isChaos}
@@ -1186,7 +1535,7 @@ const Scene: React.FC<{
         color={COLORS.pink}
         emissiveColor={COLORS.pink2}
         baseSize={0.09}
-      />
+      /> */}
 
       <HelloKittyParticle
         positions={bowPositions}
@@ -1199,26 +1548,21 @@ const Scene: React.FC<{
         baseSize={0.12}
       />
 
-      <HelloKittyParticle
-        positions={eyePositions}
-        targetPositions={eyeTargets}
+      {/* Eyes - Custom oval/ellipsoid shape for better visibility */}
+      <Eyes 
+        eyePositions={eyePositions}
+        eyeTargets={eyeTargets}
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.darkGrey}
-        emissiveColor={COLORS.darkGreyGlow}
-        baseSize={1.0}
       />
 
-      <HelloKittyParticle
-        positions={nosePositions}
-        targetPositions={noseTargets}
+      {/* Nose - Single oval orb, same z axis as eyes, closer to head center */}
+      <Nose 
+        nosePosition={[0, 1.8, 2.2]}
         isChaos={isChaos}
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        color={COLORS.yellow}
-        emissiveColor={COLORS.yellow2}
-        baseSize={0.12}
       />
 
       <Arms isChaos={isChaos} mouseRotation={mouseRotation} deviceRotation={deviceRotation} />
@@ -1229,7 +1573,8 @@ const Scene: React.FC<{
         isChaos={isChaos} 
         mouseRotation={mouseRotation}
         deviceRotation={deviceRotation}
-        onProgressChange={onProgressChange} 
+        onProgressChange={onProgressChange}
+        onPhotoChange={onPhotoChange}
       />
 
       <EffectComposer>
@@ -1251,6 +1596,356 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   const [mouseRotation, setMouseRotation] = useState({ x: 0, y: 0 });
   const [targetMouseRotation, setTargetMouseRotation] = useState({ x: 0, y: 0 });
   const [deviceRotation, setDeviceRotation] = useState<{ x: number; y: number; z: number } | undefined>(undefined);
+  const [cameraZoom, setCameraZoom] = useState(20);
+  const [musicEnabled, setMusicEnabled] = useState(false); // Music off by default
+  const [soundEffectsMuted, setSoundEffectsMuted] = useState(false); // Sound effects mute
+  const wooshSoundRef = useRef<{ play: () => void; playTransition: (pitchOffset?: number) => void; playCrescendo: (progress: number) => void } | null>(null);
+  const lastWooshPlayRef = useRef(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const musicGainRef = useRef<GainNode | null>(null); // Separate gain for music
+  const soundEffectsGainRef = useRef<GainNode | null>(null); // Separate gain for sound effects
+  const musicIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const crescendoOscillatorRef = useRef<OscillatorNode | null>(null);
+  const photoPitchRef = useRef(0); // Track pitch progression for photo transitions
+
+  // Initialize audio
+  useEffect(() => {
+    // Create 8-bit background music (synthesized)
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContextRef.current = audioContext;
+    
+    // Create separate gain nodes for music and sound effects
+    const musicGain = audioContext.createGain();
+    const soundEffectsGain = audioContext.createGain();
+    
+    musicGain.connect(audioContext.destination);
+    soundEffectsGain.connect(audioContext.destination);
+    
+    musicGain.gain.value = musicEnabled ? 1 : 0;
+    soundEffectsGain.gain.value = soundEffectsMuted ? 0 : 1;
+    
+    musicGainRef.current = musicGain;
+    soundEffectsGainRef.current = soundEffectsGain;
+    
+    // Simple 8-bit style melody generator (not used - replaced by multi-track music)
+    // const create8BitTone = (frequency: number, duration: number, type: OscillatorType = 'square') => {
+    //   const oscillator = audioContext.createOscillator();
+    //   const gainNode = audioContext.createGain();
+    //   
+    //   oscillator.connect(gainNode);
+    //   gainNode.connect(audioContext.destination);
+    //   
+    //   oscillator.frequency.value = frequency;
+    //   oscillator.type = type;
+    //   
+    //   gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    //   gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    //   
+    //   oscillator.start(audioContext.currentTime);
+    //   oscillator.stop(audioContext.currentTime + duration);
+    // };
+
+    // Create 8-bit cute Sanrio style woosh sound
+    const createWooshSound = () => {
+      // Multiple oscillators for cute layered sound
+      const osc1 = audioContext.createOscillator();
+      const osc2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(soundEffectsGain); // Sound effects go to soundEffectsGain
+      
+      // Cute 8-bit filter sweep
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, audioContext.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.4);
+      filter.Q.setValueAtTime(5, audioContext.currentTime);
+      
+      // Cute Sanrio-style oscillators (square waves for 8-bit feel) - PITCHED UP
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(880, audioContext.currentTime); // A5 (pitched up from A4)
+      osc1.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.4);
+      
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(1320, audioContext.currentTime); // E6 (pitched up from E5)
+      osc2.frequency.exponentialRampToValueAtTime(660, audioContext.currentTime + 0.4);
+      
+      // Cute volume envelope
+      gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+      
+      osc1.start(audioContext.currentTime);
+      osc2.start(audioContext.currentTime);
+      osc1.stop(audioContext.currentTime + 0.4);
+      osc2.stop(audioContext.currentTime + 0.4);
+    };
+
+    // Create 8-bit cute transition woosh (for photo changes) with pitch progression
+    const createTransitionWoosh = (pitchOffset: number = 0) => {
+      // Calculate pitch based on photo index (each photo = one semitone higher)
+      // Base pitch: C5 (523.25 Hz), each semitone multiplies by 2^(1/12) ? 1.05946
+      const semitoneMultiplier = Math.pow(2, pitchOffset / 12);
+      const baseFreq1 = 1046.50; // C6 (pitched up from C5)
+      const baseFreq2 = 1318.51; // E6 (pitched up from E5)
+      
+      const freq1 = baseFreq1 * semitoneMultiplier;
+      const freq2 = baseFreq2 * semitoneMultiplier;
+      
+      const osc1 = audioContext.createOscillator();
+      const osc2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(soundEffectsGain); // Sound effects go to soundEffectsGain
+      
+      // Cute 8-bit filter - pitched up
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(3000, audioContext.currentTime); // Higher filter for pitched up sound
+      filter.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.5);
+      filter.Q.setValueAtTime(6, audioContext.currentTime);
+      
+      // Cute Sanrio-style 8-bit oscillators - pitched up with progression
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(freq1, audioContext.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(freq1 * 0.5, audioContext.currentTime + 0.5);
+      
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(freq2, audioContext.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(freq2 * 0.5, audioContext.currentTime + 0.5);
+      
+      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      osc1.start(audioContext.currentTime);
+      osc2.start(audioContext.currentTime);
+      osc1.stop(audioContext.currentTime + 0.5);
+      osc2.stop(audioContext.currentTime + 0.5);
+    };
+    
+    // Create transitional buildup sound between polaroids
+    const createTransitionalBuildup = (pitchOffset: number = 0) => {
+      const semitoneMultiplier = Math.pow(2, pitchOffset / 12);
+      const baseFreq = 880 * semitoneMultiplier; // A5 base, scaled by pitch
+      
+      const osc = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(soundEffectsGain); // Sound effects go to soundEffectsGain
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2000, audioContext.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(3000, audioContext.currentTime + 0.3);
+      
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioContext.currentTime + 0.3);
+      
+      // Build up volume
+      gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.3);
+      
+      osc.start(audioContext.currentTime);
+      osc.stop(audioContext.currentTime + 0.3);
+    };
+
+    // Create crescendo buildup sound
+    const createCrescendo = (progress: number) => {
+      // Stop previous crescendo if exists
+      if (crescendoOscillatorRef.current) {
+        try {
+          crescendoOscillatorRef.current.stop();
+        } catch (e) {
+          // Already stopped
+        }
+      }
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      oscillator.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(soundEffectsGain); // Sound effects go to soundEffectsGain
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(200 + progress * 600, audioContext.currentTime);
+      filter.Q.setValueAtTime(15, audioContext.currentTime);
+      
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(100 + progress * 200, audioContext.currentTime);
+      
+      // Volume increases with progress
+      gainNode.gain.setValueAtTime(0.05 + progress * 0.15, audioContext.currentTime);
+      
+      oscillator.start(audioContext.currentTime);
+      crescendoOscillatorRef.current = oscillator;
+      
+      // Keep it running, will be stopped when released
+    };
+
+    // Store sound creation functions
+    wooshSoundRef.current = { 
+      play: createWooshSound,
+      playTransition: createTransitionWoosh,
+      playCrescendo: createCrescendo,
+      playBuildup: createTransitionalBuildup,
+    } as any;
+
+    // Play background music with 3 tracks: bass, melody, beat (2-5-1 progression)
+    const playBackgroundMusic = () => {
+      if (!musicEnabled) return;
+      
+      // 2-5-1 progression in C major: Dm (ii) - G (V) - C (I)
+      // Dm: D, F, A
+      // G: G, B, D
+      // C: C, E, G
+      
+      const bassNotes = [
+        146.83, // D3 (Dm root)
+        146.83, // D3
+        196.00, // G3 (G root)
+        196.00, // G3
+        130.81, // C3 (C root)
+        130.81, // C3
+      ];
+      
+      const melodyNotes = [
+        293.66, // D4 (Dm)
+        329.63, // E4
+        349.23, // F4 (Dm)
+        392.00, // G4 (G)
+        440.00, // A4
+        493.88, // B4 (G)
+        523.25, // C5 (C)
+        523.25, // C5
+      ];
+      
+      const beatFreq = 220; // A3 for kick-like beat
+      
+      let bassIndex = 0;
+      let melodyIndex = 0;
+      let beatCounter = 0;
+      
+      // Bass track (slower, lower)
+      const playBass = () => {
+        if (!musicEnabled) return;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        
+        osc.type = 'square';
+        osc.frequency.value = bassNotes[bassIndex];
+        osc.connect(gain);
+        gain.connect(musicGain);
+        
+        gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + 0.6);
+        
+        bassIndex = (bassIndex + 1) % bassNotes.length;
+        musicIntervalRef.current = setTimeout(playBass, 600);
+      };
+      
+      // Melody track (main tune)
+      const playMelody = () => {
+        if (!musicEnabled) return;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const filter = audioContext.createBiquadFilter();
+        
+        osc.type = 'square';
+        osc.frequency.value = melodyNotes[melodyIndex];
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(musicGain); // Music tracks go to musicGain
+        
+        // Cute lofi filter
+        filter.type = 'lowpass';
+        filter.frequency.value = 2000;
+        filter.Q.value = 2;
+        
+        gain.gain.setValueAtTime(0.06, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + 0.4);
+        
+        melodyIndex = (melodyIndex + 1) % melodyNotes.length;
+        setTimeout(playMelody, 450);
+      };
+      
+      // Beat track (rhythm)
+      const playBeat = () => {
+        if (!musicEnabled) return;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        
+        osc.type = 'square';
+        osc.frequency.value = beatFreq;
+        osc.connect(gain);
+        gain.connect(musicGain);
+        
+        // Short punchy beat
+        gain.gain.setValueAtTime(0.05, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + 0.1);
+        
+        beatCounter++;
+        if (beatCounter % 2 === 0) {
+          setTimeout(playBeat, 300);
+        } else {
+          setTimeout(playBeat, 200);
+        }
+      };
+      
+      // Start all tracks
+      playBass();
+      setTimeout(() => playMelody(), 100);
+      setTimeout(() => playBeat(), 50);
+    };
+
+    // Start background music if enabled
+    if (musicEnabled) {
+      playBackgroundMusic();
+    }
+
+    return () => {
+      if (musicIntervalRef.current) clearTimeout(musicIntervalRef.current);
+      if (crescendoOscillatorRef.current) {
+        try {
+          crescendoOscillatorRef.current.stop();
+        } catch (e) {
+          // Already stopped
+        }
+      }
+    };
+  }, [musicEnabled, soundEffectsMuted]);
+  
+  // Update music gain when music enabled changes
+  useEffect(() => {
+    if (musicGainRef.current) {
+      musicGainRef.current.gain.value = musicEnabled ? 1 : 0;
+    }
+  }, [musicEnabled]);
+  
+  // Update sound effects gain when mute changes
+  useEffect(() => {
+    if (soundEffectsGainRef.current) {
+      soundEffectsGainRef.current.gain.value = soundEffectsMuted ? 0 : 1;
+    }
+  }, [soundEffectsMuted]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
@@ -1268,6 +1963,65 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       return () => window.removeEventListener('deviceorientation', handleOrientation);
     }
   }, []);
+
+  // Camera gesture controls using MediaPipe or webcam (disabled - mediapipe file removed)
+  useEffect(() => {
+    // MediaPipe removed; fallback to touch gestures only
+
+    // Fallback: Basic touch gestures
+    let lastPinchDistance = 0;
+    let lastRotation = 0;
+    let handUpTimer: NodeJS.Timeout | null = null;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch to zoom
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        
+        if (lastPinchDistance > 0) {
+          const delta = distance - lastPinchDistance;
+          setCameraZoom((prev) => Math.max(10, Math.min(30, prev - delta * 0.1)));
+        }
+        lastPinchDistance = distance;
+
+        // Rotation gesture
+        const angle = Math.atan2(
+          touch2.clientY - touch1.clientY,
+          touch2.clientX - touch1.clientX
+        );
+        if (lastRotation !== 0) {
+          const rotationDelta = angle - lastRotation;
+          setTargetMouseRotation((prev) => ({
+            x: prev.x + rotationDelta * 2,
+            y: prev.y,
+          }));
+        }
+        lastRotation = angle;
+      } else {
+        lastPinchDistance = 0;
+        lastRotation = 0;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastPinchDistance = 0;
+      lastRotation = 0;
+    };
+
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      if (handUpTimer) clearTimeout(handUpTimer);
+    };
+  }, [isChaos]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1287,9 +2041,42 @@ export const HelloKittyLuxuryCard: React.FC = () => {
     return () => clearInterval(interval);
   }, [targetMouseRotation]);
 
+  // Crescendo buildup sound when holding
+  useEffect(() => {
+    if (isHolding && wooshSoundRef.current && wooshSoundRef.current.playCrescendo) {
+      // Update crescendo based on progress
+      const updateCrescendo = () => {
+        if (isHolding && wooshSoundRef.current && wooshSoundRef.current.playCrescendo) {
+          wooshSoundRef.current.playCrescendo(progress);
+        }
+      };
+      const crescendoInterval = setInterval(updateCrescendo, 100);
+      return () => {
+        clearInterval(crescendoInterval);
+        // Stop crescendo when released
+        if (crescendoOscillatorRef.current) {
+          try {
+            crescendoOscillatorRef.current.stop();
+            crescendoOscillatorRef.current = null;
+          } catch (e) {
+            // Already stopped
+          }
+        }
+      };
+    }
+  }, [isHolding, progress]);
+
   const handleMouseDown = useCallback(() => {
     setIsHolding(true);
     setIsChaos(true);
+    // Play woosh sound (throttled)
+    const now = Date.now();
+    if (now - lastWooshPlayRef.current > 200) {
+      if (wooshSoundRef.current && wooshSoundRef.current.play) {
+        wooshSoundRef.current.play();
+      }
+      lastWooshPlayRef.current = now;
+    }
   }, []);
 
   const handleMouseUp = useCallback(() => {
@@ -1311,7 +2098,11 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
   return (
     <div
-      className="relative w-full h-screen bg-black overflow-hidden"
+      className="relative w-full h-screen overflow-hidden"
+      style={{
+        background: 'radial-gradient(ellipse at center, #1a0a1a 0%, #000000 70%)',
+        backgroundSize: '100% 100%',
+      }}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -1319,67 +2110,223 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Blurred background extension */}
+      <div className="absolute inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 80% 50% at 50% 50%, rgba(255, 105, 180, 0.1) 0%, transparent 70%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+      }} />
       <div className="absolute top-4 left-4 z-10 pointer-events-none">
-        <h1 className="text-2xl font-bold mb-1 bg-gradient-to-r from-[#FFD700] via-[#FFA500] to-[#FFD700] bg-clip-text text-transparent">
-          GRAND LUXURY
+        <h1 className="text-3xl mb-2" style={{ 
+          fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+          fontWeight: 'bold',
+          color: '#FF69B4',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+          letterSpacing: '1px'
+        }}>
+          Hello Kitty
         </h1>
-        <div className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] px-2 py-1 rounded-lg inline-block">
-          <h2 className="text-sm font-semibold text-[#000000]">INTERACTIVE TREE</h2>
+        <div className="px-3 py-1.5 rounded-full inline-block" style={{
+          background: 'linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          <h2 className="text-sm font-semibold" style={{ 
+            fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+            color: '#FFFFFF',
+            fontWeight: '600'
+          }}>Interactive Experience</h2>
         </div>
+      </div>
+
+      {/* Music and Volume Toggle Buttons */}
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {/* Music Toggle Button */}
+        <button
+          onClick={() => setMusicEnabled(!musicEnabled)}
+          className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#2D3748',
+            background: musicEnabled ? '#FFF0F8' : '#E5E5E5',
+            border: `2px solid ${musicEnabled ? '#FFB6C1' : '#CCCCCC'}`,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            backdropFilter: 'blur(10px)',
+          }}
+          title={musicEnabled ? 'Disable Music' : 'Enable Music'}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {musicEnabled ? (
+              // Music note icon (on)
+              <>
+                <path d="M9 18V5L21 3V16" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <circle cx="6" cy="18" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
+                <circle cx="18" cy="16" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
+              </>
+            ) : (
+              // Music note icon (off - crossed out)
+              <>
+                <path d="M9 18V5L21 3V16" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <circle cx="6" cy="18" r="3" stroke="#999" strokeWidth="2" fill="none"/>
+                <circle cx="18" cy="16" r="3" stroke="#999" strokeWidth="2" fill="none"/>
+                <line x1="2" y1="2" x2="22" y2="22" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+              </>
+            )}
+          </svg>
+        </button>
+        
+        {/* Sound Effects Mute Button */}
+        <button
+          onClick={() => setSoundEffectsMuted(!soundEffectsMuted)}
+          className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#2D3748',
+            background: !soundEffectsMuted ? '#FFF0F8' : '#E5E5E5',
+            border: `2px solid ${!soundEffectsMuted ? '#FFB6C1' : '#CCCCCC'}`,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            backdropFilter: 'blur(10px)',
+          }}
+          title={soundEffectsMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {!soundEffectsMuted ? (
+              // Sound effects on icon (speaker)
+              <>
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34835 21.9979 12C21.9979 14.6517 20.9447 17.1947 19.07 19.07" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 12C17.0039 13.3308 16.4774 14.6024 15.54 15.54" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
+              </>
+            ) : (
+              // Sound effects off icon (crossed out speaker)
+              <>
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <line x1="23" y1="9" x2="17" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="17" y1="9" x2="23" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+              </>
+            )}
+          </svg>
+        </button>
       </div>
 
       {isChaos && (
         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-20 w-64">
-          <div className="bg-black/50 rounded-full h-2 mb-1">
+          <div className="bg-white/30 rounded-full h-2 mb-1" style={{ backdropFilter: 'blur(10px)' }}>
             <div 
-              className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] h-2 rounded-full transition-all duration-100"
-              style={{ width: `${progress * 100}%` }}
+              className="h-2 rounded-full transition-all duration-100"
+              style={{ 
+                width: `${progress * 100}%`,
+                background: 'linear-gradient(90deg, #FFB6C1 0%, #FF69B4 100%)'
+              }}
             />
           </div>
-          <p className="text-xs text-center text-white">Next picture coming up...</p>
+          <p className="text-xs text-center" style={{ 
+            fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+            color: '#FFFFFF',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+            fontWeight: '600'
+          }}>Next picture coming up...</p>
         </div>
       )}
 
+      {/* Gesture Hints - Outside Canvas */}
+      <div className="absolute bottom-20 left-4 z-10 pointer-events-none">
+        <div className="bg-black/60 backdrop-blur-md rounded-lg p-4 max-w-xs" style={{
+          border: '1px solid rgba(255, 182, 193, 0.3)',
+        }}>
+          <h3 className="text-sm font-semibold mb-2" style={{
+            fontFamily: "'Inter', sans-serif",
+            color: '#FFB6C1',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+          }}>
+            Try These Gestures:
+          </h3>
+          <ul className="space-y-2 text-xs" style={{
+            fontFamily: "'Inter', sans-serif",
+            color: '#FFFFFF',
+            listStyle: 'none',
+            padding: 0,
+          }}>
+            <li className="flex items-start gap-2">
+              <span style={{ color: '#FF69B4' }}>?</span>
+              <span>Try pinching your fingers together to zoom!</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span style={{ color: '#FF69B4' }}>?</span>
+              <span>Wave your hand left/right to rotate the scene!</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span style={{ color: '#FF69B4' }}>?</span>
+              <span>Hold your hand up to advance photos!</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <Canvas
-        className="w-full h-full"
+        className="w-full"
+        style={{ height: '90vh' }}
         gl={{ antialias: true, alpha: false }}
-        camera={{ position: [0, 0, 20], fov: 50 }}
+        camera={{ position: [0, 0, cameraZoom], fov: 50 }}
       >
         <Scene 
           isChaos={isChaos} 
           mouseRotation={mouseRotation}
           deviceRotation={deviceRotation}
-          onProgressChange={setProgress} 
+          onProgressChange={setProgress}
+          onPhotoChange={(photoIndex) => {
+            if (wooshSoundRef.current) {
+              // Update pitch progression (each photo = one semitone higher)
+              photoPitchRef.current = photoIndex;
+              
+              // Play buildup sound first
+              if ((wooshSoundRef.current as any).playBuildup) {
+                (wooshSoundRef.current as any).playBuildup(photoPitchRef.current);
+              }
+              
+              // Then play transition woosh with pitch progression
+              setTimeout(() => {
+                if (wooshSoundRef.current && wooshSoundRef.current.playTransition) {
+                  wooshSoundRef.current.playTransition(photoPitchRef.current);
+                }
+              }, 300);
+            }
+          }}
         />
       </Canvas>
 
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center gap-3">
         <button
-          className={`
-            px-6 py-3 rounded-full text-sm font-bold
-            transition-all duration-300 transform
-            ${isHolding
-              ? 'bg-gradient-to-r from-[#BE185D] to-[#EC4899] scale-110 shadow-2xl'
-              : 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] hover:scale-105 shadow-lg'
-            }
-            text-[#000000] border-2 border-[#FFD700]
-            active:scale-95
-            select-none
-          `}
+          className="px-8 py-4 rounded-2xl transition-all duration-300 transform active:scale-95 select-none"
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: '15px',
+            fontWeight: '600',
+            color: '#2D3748',
+            background: isHolding 
+              ? '#FFE5F1' 
+              : '#FFF0F8',
+            border: '2px solid #FFB6C1',
+            boxShadow: isHolding 
+              ? '0 8px 24px rgba(255, 182, 193, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6)' 
+              : '0 4px 16px rgba(255, 182, 193, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+            transform: isHolding ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
+            backdropFilter: 'blur(10px)',
+            letterSpacing: '0.3px',
+          }}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {isHolding ? 'UNLEASHING CHAOS...' : 'HOLD TO UNLEASH'}
+          {isHolding ? '? Exploring...' : '? Hold to Explore'}
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-        <div className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] px-3 py-1.5 rounded-lg">
-          <p className="text-xs font-semibold text-[#000000]">??¤@?§Î?</p>
-        </div>
-      </div>
     </div>
   );
 };
