@@ -57,8 +57,8 @@ const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boo
   // Head (Ellipsoid) - Centered at (0, 2, 0)
   const head = (Math.pow(x / 3.2, 2) + Math.pow((y - 2) / 2.4, 2) + Math.pow(z / 2.2, 2)) <= 1;
 
-  // Body (Ellipsoid) - Centered at (0, -1.5, 0)
-  const body = (Math.pow(x / 2.2, 2) + Math.pow((y + 1.5) / 2.8, 2) + Math.pow(z / 1.8, 2)) <= 1;
+  // Body (Ellipsoid) - Centered at (0, -1.5, 0) - WIDER (increased x and z radius)
+  const body = (Math.pow(x / 3.2, 2) + Math.pow((y + 1.5) / 2.8, 2) + Math.pow(z / 2.4, 2)) <= 1;
 
   // Left Ear (Ellipsoid) - Tilted INWARD (toward each other), double the angle, Centered at (2.0, 4.5, 0.5)
   const earL = (Math.pow((x - 2.0) / 0.9, 2) + Math.pow((y - 4.5) / 1.4, 2) + Math.pow((z - 0.5) / 0.6, 2)) <= 1;
@@ -1057,7 +1057,8 @@ const PhotoFrame: React.FC<{
   personalizedMessage?: string;
   mouseRotation: { x: number; y: number };
   deviceRotation?: { x: number; y: number; z: number };
-}> = ({ position, rotation, imageUrl, isZoomed, customText, personalizedMessage, mouseRotation, deviceRotation }) => {
+  isGif?: boolean;
+}> = ({ position, rotation, imageUrl, isZoomed, customText, personalizedMessage, mouseRotation, deviceRotation, isGif = false }) => {
   const frameRef = useRef<THREE.Group>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const loader = useRef(new THREE.TextureLoader());
@@ -1075,6 +1076,61 @@ const PhotoFrame: React.FC<{
           console.log('Successfully loaded image:', imageUrl);
           loadedTexture.flipY = false; // Keep original orientation
           loadedTexture.colorSpace = THREE.SRGBColorSpace;
+          
+          // Crop GIF to 3:4 aspect ratio if it's a GIF
+          if (isGif && loadedTexture.image) {
+            const img = loadedTexture.image as any; // Texture image can be Image, Video, or Canvas
+            let originalWidth = 1;
+            let originalHeight = 1;
+            
+            if (img.width && img.height) {
+              originalWidth = img.width;
+              originalHeight = img.height;
+            } else if (img.naturalWidth && img.naturalHeight) {
+              originalWidth = img.naturalWidth;
+              originalHeight = img.naturalHeight;
+            } else if (img.videoWidth && img.videoHeight) {
+              originalWidth = img.videoWidth;
+              originalHeight = img.videoHeight;
+            }
+            const originalAspect = originalWidth / originalHeight;
+            const targetAspect = 3 / 4; // 3:4 aspect ratio
+            
+            if (Math.abs(originalAspect - targetAspect) > 0.01) {
+              // Need to crop
+              let cropWidth = originalWidth;
+              let cropHeight = originalHeight;
+              let offsetX = 0;
+              let offsetY = 0;
+              
+              if (originalAspect > targetAspect) {
+                // Image is wider than 3:4, crop width
+                cropHeight = originalHeight;
+                cropWidth = originalHeight * targetAspect;
+                offsetX = (originalWidth - cropWidth) / 2;
+              } else {
+                // Image is taller than 3:4, crop height
+                cropWidth = originalWidth;
+                cropHeight = originalWidth / targetAspect;
+                offsetY = (originalHeight - cropHeight) / 2;
+              }
+              
+              // Create canvas to crop
+              const canvas = document.createElement('canvas');
+              canvas.width = cropWidth;
+              canvas.height = cropHeight;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, offsetX, offsetY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                const croppedTexture = new THREE.CanvasTexture(canvas);
+                croppedTexture.flipY = false;
+                croppedTexture.colorSpace = THREE.SRGBColorSpace;
+                setTexture(croppedTexture);
+                return;
+              }
+            }
+          }
+          
           setTexture(loadedTexture);
         },
         undefined,
@@ -1106,7 +1162,7 @@ const PhotoFrame: React.FC<{
       console.warn('No imageUrl provided for polaroid');
       setTexture(null);
     }
-  }, [imageUrl]);
+  }, [imageUrl, isGif]);
 
   useFrame(() => {
     if (frameRef.current) {
@@ -1180,7 +1236,31 @@ const PhotoFrame: React.FC<{
           transparent={false}
         />
       </mesh>
-      {/* Debug: Show if texture is loaded */}
+      {/* Opening message display (no image) */}
+      {!imageUrl && personalizedMessage && (
+        <Html position={[0, 0.15, 0.04]} center>
+          <div style={{ 
+            width: `${photoWidth * 100}px`, 
+            height: `${photoHeight * 100}px`,
+            backgroundColor: '#FFF9E6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            color: '#333',
+            padding: '20px',
+            textAlign: 'center',
+            fontFamily: 'cursive, sans-serif',
+            fontWeight: 'bold',
+            lineHeight: '1.6',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+          }}>
+            {personalizedMessage}
+          </div>
+        </Html>
+      )}
+      {/* Debug: Show if texture is loading */}
       {!texture && imageUrl && (
         <Html position={[0, 0.15, 0.04]} center>
           <div style={{ 
@@ -1194,7 +1274,7 @@ const PhotoFrame: React.FC<{
             color: '#999',
             border: '1px solid #ddd'
           }}>
-            {imageUrl ? 'Loading image...' : 'No image'}
+            Loading image...
           </div>
         </Html>
       )}
@@ -1260,7 +1340,7 @@ const PhotoFrame: React.FC<{
 const loadGalleryImages = () => {
   try {
     // @ts-ignore
-    const images = import.meta.glob('/src/assets/images/*.{jpg,jpeg,png,webp}', { 
+    const images = import.meta.glob('/src/assets/images/*.{jpg,jpeg,png,webp,gif}', { 
       eager: true,
       import: 'default' 
     }) as Record<string, string>;
@@ -1320,8 +1400,8 @@ const PhotoGallery: React.FC<{
   onProgressChange?: (progress: number) => void;
   onPhotoChange?: (photoIndex: number) => void;
 }> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange, onPhotoChange }) => {
-  const photoCount = 40;
   const availableImages = useMemo(() => loadGalleryImages(), []);
+  const totalPolaroids = availableImages.length + 1; // +1 for opening message
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [personalizedMessages, setPersonalizedMessages] = useState<Record<string, string>>({});
@@ -1330,7 +1410,7 @@ const PhotoGallery: React.FC<{
   const photoStartTime = useRef<number | null>(null);
   const lastPhotoIndexRef = useRef(0); // Remember last photo index when released
 
-  const startPositions = useMemo(() => generatePolaroidStartPositions(photoCount), []);
+  const startPositions = useMemo(() => generatePolaroidStartPositions(totalPolaroids), [totalPolaroids]);
   
   // Load descriptions and personalized messages on mount
   useEffect(() => {
@@ -1341,19 +1421,21 @@ const PhotoGallery: React.FC<{
   }, []);
   
   const imageData = useMemo(() => {
-    const data: Array<{ url: string; path: string }> = [];
-    for (let i = 0; i < photoCount; i++) {
-      if (availableImages.length > 0) {
-        data.push(availableImages[i % availableImages.length]);
-      } else {
-        data.push({ url: '', path: '' });
-      }
+    // Add opening polaroid (no image) as first item
+    const data: Array<{ url: string; path: string }> = [
+      { url: '', path: '__opening__' } // Opening message only, no image
+    ];
+    
+    // Add all available images
+    if (availableImages.length > 0) {
+      data.push(...availableImages);
     }
+    
     return data;
-  }, [availableImages, photoCount]);
+  }, [availableImages]);
 
   useEffect(() => {
-    if (isChaos && availableImages.length > 0) {
+    if (isChaos && imageData.length > 0) {
       // Continue from last photo index when re-pressed
       if (lastPhotoIndexRef.current > 0) {
         setCurrentPhotoIndex(lastPhotoIndexRef.current);
@@ -1370,7 +1452,7 @@ const PhotoGallery: React.FC<{
 
           if (newProgress >= 1) {
             setCurrentPhotoIndex((prev) => {
-              const next = (prev + 1) % availableImages.length;
+              const next = (prev + 1) % imageData.length; // Use imageData.length (includes opening)
               lastPhotoIndexRef.current = next;
               // Play transition woosh sound with pitch progression
               onPhotoChange?.(next);
@@ -1404,12 +1486,12 @@ const PhotoGallery: React.FC<{
       photoStartTime.current = null;
       if (progressInterval.current) clearInterval(progressInterval.current);
     }
-  }, [isChaos, availableImages.length, onProgressChange, currentPhotoIndex]);
+  }, [isChaos, imageData.length, onProgressChange, currentPhotoIndex]);
 
   const frames = useMemo(() => {
-    const totalImages = availableImages.length > 0 ? availableImages.length : photoCount;
-    return Array.from({ length: photoCount }, (_, i) => {
-      const angle = (i / photoCount) * Math.PI * 2;
+    const totalImages = imageData.length; // Include opening + all images
+    return Array.from({ length: totalImages }, (_, i) => {
+      const angle = (i / totalImages) * Math.PI * 2;
       const imageInfo = imageData[i];
       const filename = imageInfo.path ? getFilename(imageInfo.path) : '';
       // Calculate photo number based on current index
@@ -1426,9 +1508,10 @@ const PhotoGallery: React.FC<{
         isZoomed: isChaos && i === currentPhotoIndex,
         customText,
         personalizedMessage,
+        isGif: filename.toLowerCase().endsWith('.gif'), // Flag for GIF cropping
       };
     });
-  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions, personalizedMessages, availableImages.length, photoCount]);
+  }, [startPositions, imageData, isChaos, currentPhotoIndex, descriptions, personalizedMessages]);
 
   return (
     <>
@@ -1443,6 +1526,7 @@ const PhotoGallery: React.FC<{
           personalizedMessage={frame.personalizedMessage}
           mouseRotation={mouseRotation}
           deviceRotation={deviceRotation}
+          isGif={frame.isGif}
         />
       ))}
     </>
