@@ -12,7 +12,6 @@ let videoElement: HTMLVideoElement | null = null;
 let stream: MediaStream | null = null;
 let isRunning = false;
 let callback: ((result: HandTrackingResult) => void) | null = null;
-let videoElementCallback: ((video: HTMLVideoElement) => void) | null = null;
 
 export async function initializeHandTracking(
   onResult: (result: HandTrackingResult) => void,
@@ -51,7 +50,6 @@ export async function initializeHandTracking(
     if (onVideoReady) {
       onVideoReady(videoElement);
     }
-    videoElementCallback = onVideoReady || null;
 
     isRunning = true;
     detectHands();
@@ -112,7 +110,7 @@ function detectGesture(result: any): string {
   }
 
   // Open hand (all fingers extended)
-  const fingersExtended = [4, 8, 12, 16, 20].every((tipIndex, i) => {
+  const fingersExtended = [4, 8, 12, 16, 20].every((tipIndex) => {
     const tip = landmarks[tipIndex];
     const pip = landmarks[tipIndex - 2];
     return tip.y < pip.y;
