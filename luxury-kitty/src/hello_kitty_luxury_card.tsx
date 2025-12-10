@@ -3,6 +3,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import backgroundMusicUrl from './assets/audio/8-bit bg.mp3';
+import birthdayMusicUrl from './assets/audio/8-bit happy birthday.mp3';
 
 // --- OLD SDF Helper Functions (COMMENTED OUT) ---
 /*
@@ -308,6 +310,10 @@ const generateFloatingObjects = (count: number): Array<{
   orbitalSpeed: number;
   orbitalRadius: number;
   verticalOffset: number;
+  pulseSpeed: number;
+  pulsePhase: number;
+  fadePhase: number;
+  sparkleIntensity: number;
 }> => {
   const objects: Array<{
     position: [number, number, number];
@@ -319,8 +325,24 @@ const generateFloatingObjects = (count: number): Array<{
     orbitalSpeed: number;
     orbitalRadius: number;
     verticalOffset: number;
+    pulseSpeed: number;
+    pulsePhase: number;
+    fadePhase: number;
+    sparkleIntensity: number;
   }> = [];
-  const colors = ['#0D9488', '#8B0000', '#FFD700']; // Emerald, Dark Red, Gold only
+  // More magical fairy colors: pastel pinks, purples, golds, soft blues
+  const colors = [
+    '#FFB6E1', // Soft pink
+    '#FFC0E3', // Light pink
+    '#E6B3FF', // Lavender
+    '#DDA0DD', // Plum
+    '#FFD700', // Gold
+    '#FFE4B5', // Moccasin
+    '#B0E0E6', // Powder blue
+    '#FF69B4', // Hot pink
+    '#FFB6C1', // Light pink
+    '#DA70D6', // Orchid
+  ];
   const shapes: Array<'sphere' | 'cube' | 'tetrahedron'> = ['sphere', 'cube', 'tetrahedron'];
 
   for (let i = 0; i < count; i++) {
@@ -330,13 +352,19 @@ const generateFloatingObjects = (count: number): Array<{
     const orbitalSpeed = 0.2 + Math.random() * 0.3; // Varying orbital speeds
     const verticalOffset = (Math.random() - 0.5) * 20; // Much more vertical variation
     
-    // Base size with 50% variation (if base is 0.4, range is 0.2-0.6)
+    // Base size with 50% variation (if base is 0.3, range is 0.15-0.45)
     const baseSize = 0.3;
     const sizeVariation = baseSize * 0.5; // 50% of base
     const size = baseSize - sizeVariation + Math.random() * (sizeVariation * 2);
     
-    // Varying glow intensity for depth
-    const glowIntensity = 0.3 + Math.random() * 0.5; // 0.3-0.8
+    // Varying glow intensity for depth - more magical with higher glow
+    const glowIntensity = 0.5 + Math.random() * 1.0; // 0.5-1.5 (brighter)
+    
+    // Pulsing effect parameters
+    const pulseSpeed = 0.5 + Math.random() * 1.5; // Varying pulse speeds
+    const pulsePhase = Math.random() * Math.PI * 2; // Random starting phase
+    const fadePhase = Math.random() * Math.PI * 2; // Random fade phase
+    const sparkleIntensity = 0.3 + Math.random() * 0.7; // Sparkle intensity
     
     objects.push({
       position: [
@@ -352,6 +380,10 @@ const generateFloatingObjects = (count: number): Array<{
       orbitalSpeed,
       orbitalRadius,
       verticalOffset,
+      pulseSpeed,
+      pulsePhase,
+      fadePhase,
+      sparkleIntensity,
     });
   }
 
@@ -904,7 +936,7 @@ const FloatingObjects: React.FC<{
   deviceRotation?: { x: number; y: number; z: number };
 }> = ({ mouseRotation, deviceRotation }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const objects = useMemo(() => generateFloatingObjects(150), []); // Fill whole space with floating objects
+  const objects = useMemo(() => generateFloatingObjects(200), []); // More objects for magical effect
   const rotationSpeeds = useMemo(() => 
     objects.map(() => ({
       x: (Math.random() - 0.5) * 0.01,
@@ -914,10 +946,14 @@ const FloatingObjects: React.FC<{
     [objects]
   );
   const meshRefs = useRef<Array<THREE.Mesh | null>>(objects.map(() => null));
+  const materialRefs = useRef<Array<THREE.MeshStandardMaterial | null>>(objects.map(() => null));
   const orbitalTimeRef = useRef(0);
+  const magicTimeRef = useRef(0);
 
   useFrame((_, delta) => {
     orbitalTimeRef.current += delta;
+    magicTimeRef.current += delta * 0.5; // Slower time for magical effects
+    
     if (groupRef.current) {
       if (deviceRotation) {
         groupRef.current.rotation.x = deviceRotation.x * 0.3;
@@ -936,6 +972,28 @@ const FloatingObjects: React.FC<{
         mesh.rotation.z += rotationSpeeds[idx].z;
       }
     });
+
+    // Update magical effects: pulsing glow, fade, sparkle
+    materialRefs.current.forEach((material, idx) => {
+      if (material && objects[idx]) {
+        const obj = objects[idx];
+        
+        // Pulsing glow effect
+        const pulse = Math.sin(magicTimeRef.current * obj.pulseSpeed + obj.pulsePhase) * 0.3 + 0.7; // 0.4 to 1.0
+        const glow = obj.glowIntensity * pulse;
+        
+        // Fade effect (breathing)
+        const fade = Math.sin(magicTimeRef.current * 0.8 + obj.fadePhase) * 0.2 + 0.8; // 0.6 to 1.0
+        
+        // Sparkle effect (twinkling)
+        const sparkle = Math.sin(magicTimeRef.current * 2 + obj.pulsePhase) * obj.sparkleIntensity * 0.5 + 1.0;
+        
+        // Update material properties
+        material.emissiveIntensity = glow * sparkle;
+        material.opacity = 0.2 + (fade * 0.4); // 0.2 to 0.6 opacity range (more fade)
+        material.emissive.setHex(parseInt(obj.color.replace('#', ''), 16));
+      }
+    });
   });
 
   return (
@@ -951,15 +1009,18 @@ const FloatingObjects: React.FC<{
         }
 
         const color = new THREE.Color(obj.color);
-        // Keep colors vibrant for crystal effect
-        const crystalColor = color.clone();
+        const fairyColor = color.clone();
         
         // Calculate orbital position
         const currentAngle = obj.orbitalAngle + orbitalTimeRef.current * obj.orbitalSpeed;
         const orbitalX = Math.cos(currentAngle) * obj.orbitalRadius;
         const orbitalZ = Math.sin(currentAngle) * obj.orbitalRadius;
         
-        // Create crystal glass material: more transparent, highly reflective
+        // Initial magical properties
+        const initialGlow = obj.glowIntensity;
+        const initialOpacity = 0.4;
+        
+        // Create magical fairy material: pulsing glow, fade, sparkle
         return (
           <mesh 
             key={idx} 
@@ -968,15 +1029,16 @@ const FloatingObjects: React.FC<{
             geometry={geometry}
           >
             <meshStandardMaterial
-              color={crystalColor}
-              emissive={crystalColor}
-              emissiveIntensity={obj.glowIntensity * 0.8} // Slightly less glow for clarity
-              metalness={0.95} // Very high metalness for mirror-like reflection
-              roughness={0.05} // Very low roughness for crystal clarity
+              ref={(el) => { materialRefs.current[idx] = el; }}
+              color={fairyColor}
+              emissive={fairyColor}
+              emissiveIntensity={initialGlow}
+              metalness={0.7} // Slightly less metalness for softer fairy glow
+              roughness={0.1} // Low roughness for sparkle
               transparent={true}
-              opacity={0.3} // More transparent for crystal glass effect
-              envMapIntensity={2.5} // Very strong environment reflection
-              side={THREE.DoubleSide} // Render both sides for transparency
+              opacity={initialOpacity}
+              envMapIntensity={3.0} // Strong environment reflection for sparkle
+              side={THREE.DoubleSide}
             />
           </mesh>
         );
@@ -1579,12 +1641,15 @@ const Scene: React.FC<{
 
       <EffectComposer>
         <Bloom
-          intensity={2.5}
-          luminanceThreshold={0.3}
-          luminanceSmoothing={0.9}
+          intensity={3.5}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.95}
           height={300}
         />
       </EffectComposer>
+      
+      {/* Magical fog/atmosphere */}
+      <fog attach="fog" args={['#1a0a1a', 15, 50]} />
     </>
   );
 };
@@ -1597,34 +1662,31 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   const [targetMouseRotation, setTargetMouseRotation] = useState({ x: 0, y: 0 });
   const [deviceRotation, setDeviceRotation] = useState<{ x: number; y: number; z: number } | undefined>(undefined);
   const [cameraZoom, setCameraZoom] = useState(20);
-  const [musicEnabled, setMusicEnabled] = useState(false); // Music off by default
+  const [musicState, setMusicState] = useState<'off' | 'background' | 'birthday'>('off'); // Music state: off -> background -> birthday -> off
   const [soundEffectsMuted, setSoundEffectsMuted] = useState(false); // Sound effects mute
+  const [isMobile, setIsMobile] = useState(false);
+  const [detectedGesture, setDetectedGesture] = useState<string>('No hand detected');
+  const [cameraVideoRef, setCameraVideoRef] = useState<HTMLVideoElement | null>(null);
+  const displayVideoRef = useRef<HTMLVideoElement>(null);
   const wooshSoundRef = useRef<{ play: () => void; playTransition: (pitchOffset?: number) => void; playCrescendo: (progress: number) => void } | null>(null);
   const lastWooshPlayRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const musicGainRef = useRef<GainNode | null>(null); // Separate gain for music
   const soundEffectsGainRef = useRef<GainNode | null>(null); // Separate gain for sound effects
-  const musicIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
+  const birthdayMusicRef = useRef<HTMLAudioElement | null>(null);
   const crescendoOscillatorRef = useRef<OscillatorNode | null>(null);
   const photoPitchRef = useRef(0); // Track pitch progression for photo transitions
 
-  // Initialize audio
+  // Initialize audio (sound effects and music)
   useEffect(() => {
-    // Create 8-bit background music (synthesized)
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioContextRef.current = audioContext;
     
-    // Create separate gain nodes for music and sound effects
-    const musicGain = audioContext.createGain();
+    // Create gain node for sound effects only
     const soundEffectsGain = audioContext.createGain();
-    
-    musicGain.connect(audioContext.destination);
     soundEffectsGain.connect(audioContext.destination);
-    
-    musicGain.gain.value = musicEnabled ? 1 : 0;
     soundEffectsGain.gain.value = soundEffectsMuted ? 0 : 1;
     
-    musicGainRef.current = musicGain;
     soundEffectsGainRef.current = soundEffectsGain;
     
     // Simple 8-bit style melody generator (not used - replaced by multi-track music)
@@ -1800,129 +1862,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       playBuildup: createTransitionalBuildup,
     } as any;
 
-    // Play background music with 3 tracks: bass, melody, beat (2-5-1 progression)
-    const playBackgroundMusic = () => {
-      if (!musicEnabled) return;
-      
-      // 2-5-1 progression in C major: Dm (ii) - G (V) - C (I)
-      // Dm: D, F, A
-      // G: G, B, D
-      // C: C, E, G
-      
-      const bassNotes = [
-        146.83, // D3 (Dm root)
-        146.83, // D3
-        196.00, // G3 (G root)
-        196.00, // G3
-        130.81, // C3 (C root)
-        130.81, // C3
-      ];
-      
-      const melodyNotes = [
-        293.66, // D4 (Dm)
-        329.63, // E4
-        349.23, // F4 (Dm)
-        392.00, // G4 (G)
-        440.00, // A4
-        493.88, // B4 (G)
-        523.25, // C5 (C)
-        523.25, // C5
-      ];
-      
-      const beatFreq = 220; // A3 for kick-like beat
-      
-      let bassIndex = 0;
-      let melodyIndex = 0;
-      let beatCounter = 0;
-      
-      // Bass track (slower, lower)
-      const playBass = () => {
-        if (!musicEnabled) return;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        
-        osc.type = 'square';
-        osc.frequency.value = bassNotes[bassIndex];
-        osc.connect(gain);
-        gain.connect(musicGain);
-        
-        gain.gain.setValueAtTime(0.08, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-        
-        osc.start(audioContext.currentTime);
-        osc.stop(audioContext.currentTime + 0.6);
-        
-        bassIndex = (bassIndex + 1) % bassNotes.length;
-        musicIntervalRef.current = setTimeout(playBass, 600);
-      };
-      
-      // Melody track (main tune)
-      const playMelody = () => {
-        if (!musicEnabled) return;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const filter = audioContext.createBiquadFilter();
-        
-        osc.type = 'square';
-        osc.frequency.value = melodyNotes[melodyIndex];
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(musicGain); // Music tracks go to musicGain
-        
-        // Cute lofi filter
-        filter.type = 'lowpass';
-        filter.frequency.value = 2000;
-        filter.Q.value = 2;
-        
-        gain.gain.setValueAtTime(0.06, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-        
-        osc.start(audioContext.currentTime);
-        osc.stop(audioContext.currentTime + 0.4);
-        
-        melodyIndex = (melodyIndex + 1) % melodyNotes.length;
-        setTimeout(playMelody, 450);
-      };
-      
-      // Beat track (rhythm)
-      const playBeat = () => {
-        if (!musicEnabled) return;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        
-        osc.type = 'square';
-        osc.frequency.value = beatFreq;
-        osc.connect(gain);
-        gain.connect(musicGain);
-        
-        // Short punchy beat
-        gain.gain.setValueAtTime(0.05, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-        
-        osc.start(audioContext.currentTime);
-        osc.stop(audioContext.currentTime + 0.1);
-        
-        beatCounter++;
-        if (beatCounter % 2 === 0) {
-          setTimeout(playBeat, 300);
-        } else {
-          setTimeout(playBeat, 200);
-        }
-      };
-      
-      // Start all tracks
-      playBass();
-      setTimeout(() => playMelody(), 100);
-      setTimeout(() => playBeat(), 50);
-    };
-
-    // Start background music if enabled
-    if (musicEnabled) {
-      playBackgroundMusic();
-    }
-
     return () => {
-      if (musicIntervalRef.current) clearTimeout(musicIntervalRef.current);
       if (crescendoOscillatorRef.current) {
         try {
           crescendoOscillatorRef.current.stop();
@@ -1931,14 +1871,96 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         }
       }
     };
-  }, [musicEnabled, soundEffectsMuted]);
-  
-  // Update music gain when music enabled changes
+  }, [soundEffectsMuted]);
+
+  // Sync camera video stream to display element
   useEffect(() => {
-    if (musicGainRef.current) {
-      musicGainRef.current.gain.value = musicEnabled ? 1 : 0;
+    if (!isMobile && displayVideoRef.current && cameraVideoRef) {
+      // Copy the video stream to the display element
+      if (cameraVideoRef.srcObject) {
+        displayVideoRef.current.srcObject = cameraVideoRef.srcObject;
+        displayVideoRef.current.autoplay = true;
+        displayVideoRef.current.playsInline = true;
+        displayVideoRef.current.muted = true;
+        displayVideoRef.current.play().catch((e) => {
+          console.log('Video play error:', e);
+        });
+      }
     }
-  }, [musicEnabled]);
+  }, [cameraVideoRef, isMobile]);
+  
+  // Initialize audio elements for music
+  useEffect(() => {
+    // Create background music audio element
+    if (!backgroundMusicRef.current) {
+      const bgAudio = new Audio(backgroundMusicUrl);
+      bgAudio.loop = true;
+      bgAudio.volume = 0.5;
+      backgroundMusicRef.current = bgAudio;
+    }
+
+    // Create birthday music audio element
+    if (!birthdayMusicRef.current) {
+      const bdayAudio = new Audio(birthdayMusicUrl);
+      bdayAudio.loop = true; // Loop birthday song too
+      bdayAudio.volume = 0.5;
+      birthdayMusicRef.current = bdayAudio;
+    }
+
+    return () => {
+      // Cleanup
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause();
+        backgroundMusicRef.current = null;
+      }
+      if (birthdayMusicRef.current) {
+        birthdayMusicRef.current.pause();
+        birthdayMusicRef.current = null;
+      }
+    };
+  }, []);
+
+  // Handle music state changes
+  useEffect(() => {
+    console.log(`? Music State Changed: ${musicState}`);
+    
+    if (musicState === 'off') {
+      // Stop all music
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause();
+        backgroundMusicRef.current.currentTime = 0;
+      }
+      if (birthdayMusicRef.current) {
+        birthdayMusicRef.current.pause();
+        birthdayMusicRef.current.currentTime = 0;
+      }
+      console.log('? Music stopped');
+    } else if (musicState === 'background') {
+      // Stop birthday, play background
+      if (birthdayMusicRef.current) {
+        birthdayMusicRef.current.pause();
+        birthdayMusicRef.current.currentTime = 0;
+      }
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.play().catch((e) => {
+          console.error('? Error playing background music:', e);
+        });
+        console.log('? Playing background song');
+      }
+    } else if (musicState === 'birthday') {
+      // Stop background, play birthday
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause();
+        backgroundMusicRef.current.currentTime = 0;
+      }
+      if (birthdayMusicRef.current) {
+        birthdayMusicRef.current.play().catch((e) => {
+          console.error('? Error playing birthday music:', e);
+        });
+        console.log('? Playing birthday song');
+      }
+    }
+  }, [musicState]);
   
   // Update sound effects gain when mute changes
   useEffect(() => {
@@ -1947,8 +1969,23 @@ export const HelloKittyLuxuryCard: React.FC = () => {
     }
   }, [soundEffectsMuted]);
 
+  // Detect mobile device
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) || window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Only enable device rotation on desktop (not mobile) to keep Hello Kitty upright on mobile
+    if (!isMobile && typeof window !== 'undefined' && window.DeviceOrientationEvent) {
       const handleOrientation = (e: DeviceOrientationEvent) => {
         if (e.beta !== null && e.gamma !== null && e.alpha !== null) {
           setDeviceRotation({
@@ -1961,17 +1998,19 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
       window.addEventListener('deviceorientation', handleOrientation);
       return () => window.removeEventListener('deviceorientation', handleOrientation);
+    } else {
+      // On mobile, don't apply device rotation - keep Hello Kitty upright
+      setDeviceRotation(undefined);
     }
-  }, []);
+  }, [isMobile]);
 
-  // Camera gesture controls using MediaPipe or webcam (disabled - mediapipe file removed)
+  // Camera gesture controls using MediaPipe or webcam (desktop only)
   useEffect(() => {
-    // MediaPipe removed; fallback to touch gestures only
-
-    // Fallback: Basic touch gestures
-    let lastPinchDistance = 0;
-    let lastRotation = 0;
-    let handUpTimer: NodeJS.Timeout | null = null;
+    if (isMobile) {
+      // On mobile, use basic touch gestures only
+      let lastPinchDistance = 0;
+      let lastRotation = 0;
+      let handUpTimer: NodeJS.Timeout | null = null;
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2) {
@@ -2021,7 +2060,58 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       window.removeEventListener('touchend', handleTouchEnd);
       if (handUpTimer) clearTimeout(handUpTimer);
     };
-  }, [isChaos]);
+  } else {
+    // Desktop: Use MediaPipe hand tracking
+    let handTrackingCleanup: (() => void) | null = null;
+
+    import('./utils/mediapipeHandTracking').then((module) => {
+      console.log('? Initializing MediaPipe hand tracking...');
+      module.initializeHandTracking(
+        (result) => {
+          setDetectedGesture(result.gesture);
+          console.log('? Gesture detected:', result.gesture);
+          
+          if (result.zoom > 0) {
+            setCameraZoom((prev) => Math.max(10, Math.min(30, prev - result.zoom * 2)));
+          }
+          
+          if (Math.abs(result.rotation.x) > 0.1 || Math.abs(result.rotation.y) > 0.1) {
+            setTargetMouseRotation((prev) => ({
+              x: prev.x + result.rotation.y * 0.5,
+              y: prev.y + result.rotation.x * 0.5,
+            }));
+          }
+          
+          if (result.handUp && isChaos) {
+            setIsChaos(false);
+            setTimeout(() => setIsChaos(true), 100);
+          }
+        },
+        (videoEl) => {
+          // Video element is ready for display
+          console.log('? Camera video element ready:', videoEl);
+          setCameraVideoRef(videoEl);
+        }
+      ).catch((error: any) => {
+        console.error('? MediaPipe initialization failed:', error);
+        setDetectedGesture('Camera not available');
+      });
+      
+      handTrackingCleanup = () => {
+        module.cleanupHandTracking();
+      };
+    }).catch((error: any) => {
+      console.log('Failed to load MediaPipe module:', error);
+      setDetectedGesture('MediaPipe not available');
+    });
+
+    return () => {
+      if (handTrackingCleanup) {
+        handTrackingCleanup();
+      }
+    };
+  }
+  }, [isChaos, isMobile]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -2138,78 +2228,116 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         </div>
       </div>
 
+
       {/* Music and Volume Toggle Buttons */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        {/* Music Toggle Button */}
-        <button
-          onClick={() => setMusicEnabled(!musicEnabled)}
-          className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
-          style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#2D3748',
-            background: musicEnabled ? '#FFF0F8' : '#E5E5E5',
-            border: `2px solid ${musicEnabled ? '#FFB6C1' : '#CCCCCC'}`,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            backdropFilter: 'blur(10px)',
-          }}
-          title={musicEnabled ? 'Disable Music' : 'Enable Music'}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {musicEnabled ? (
-              // Music note icon (on)
-              <>
-                <path d="M9 18V5L21 3V16" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <circle cx="6" cy="18" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
-                <circle cx="18" cy="16" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
-              </>
-            ) : (
-              // Music note icon (off - crossed out)
-              <>
-                <path d="M9 18V5L21 3V16" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <circle cx="6" cy="18" r="3" stroke="#999" strokeWidth="2" fill="none"/>
-                <circle cx="18" cy="16" r="3" stroke="#999" strokeWidth="2" fill="none"/>
-                <line x1="2" y1="2" x2="22" y2="22" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
-              </>
-            )}
-          </svg>
-        </button>
+      <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
+        <div className="flex gap-2">
+          {/* Music Toggle Button - Cycles: off -> background -> birthday -> off */}
+          <button
+            onClick={() => {
+              if (musicState === 'off') {
+                setMusicState('background');
+              } else if (musicState === 'background') {
+                setMusicState('birthday');
+              } else {
+                setMusicState('off');
+              }
+            }}
+            className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
+            style={{
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2D3748',
+              background: musicState === 'off' ? '#E5E5E5' : musicState === 'birthday' ? '#FFF0F8' : '#FFF0F8',
+              border: `2px solid ${musicState === 'off' ? '#CCCCCC' : musicState === 'birthday' ? '#FF69B4' : '#FFB6C1'}`,
+              boxShadow: musicState === 'birthday' 
+                ? '0 2px 8px rgba(0,0,0,0.1), 0 0 20px rgba(255, 105, 180, 0.6)' 
+                : '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+            }}
+            title={
+              musicState === 'off' ? 'Play Background Music' 
+              : musicState === 'background' ? 'Play Happy Birthday' 
+              : 'Turn Music Off'
+            }
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {musicState === 'off' ? (
+                // Music note icon (off - crossed out and faded)
+                <>
+                  <path d="M9 18V5L21 3V16" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.5"/>
+                  <circle cx="6" cy="18" r="3" stroke="#999" strokeWidth="2" fill="none" opacity="0.5"/>
+                  <circle cx="18" cy="16" r="3" stroke="#999" strokeWidth="2" fill="none" opacity="0.5"/>
+                  <line x1="2" y1="2" x2="22" y2="22" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+                </>
+              ) : musicState === 'birthday' ? (
+                // Birthday cake or special icon with glow
+                <>
+                  <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <circle cx="12" cy="10" r="1.5" fill="#FF69B4"/>
+                </>
+              ) : (
+                // Music note icon (background song)
+                <>
+                  <path d="M9 18V5L21 3V16" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <circle cx="6" cy="18" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
+                  <circle cx="18" cy="16" r="3" stroke="#FF69B4" strokeWidth="2" fill="none"/>
+                </>
+              )}
+            </svg>
+          </button>
         
-        {/* Sound Effects Mute Button */}
-        <button
-          onClick={() => setSoundEffectsMuted(!soundEffectsMuted)}
-          className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
+          {/* Sound Effects Mute Button */}
+          <button
+            onClick={() => setSoundEffectsMuted(!soundEffectsMuted)}
+            className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
+            style={{
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2D3748',
+              background: !soundEffectsMuted ? '#FFF0F8' : '#E5E5E5',
+              border: `2px solid ${!soundEffectsMuted ? '#FFB6C1' : '#CCCCCC'}`,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+            }}
+            title={soundEffectsMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {!soundEffectsMuted ? (
+                // Sound effects on icon (speaker)
+                <>
+                  <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34835 21.9979 12C21.9979 14.6517 20.9447 17.1947 19.07 19.07" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 12C17.0039 13.3308 16.4774 14.6024 15.54 15.54" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
+                </>
+              ) : (
+                // Sound effects off icon (crossed out speaker)
+                <>
+                  <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <line x1="23" y1="9" x2="17" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="17" y1="9" x2="23" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
+        
+        {/* Music State Indicator - Plain text, below button, right-aligned */}
+        <p 
+          className="text-xs pointer-events-none"
           style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#2D3748',
-            background: !soundEffectsMuted ? '#FFF0F8' : '#E5E5E5',
-            border: `2px solid ${!soundEffectsMuted ? '#FFB6C1' : '#CCCCCC'}`,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            backdropFilter: 'blur(10px)',
+            fontFamily: "'Inter', sans-serif",
+            color: musicState === 'off' ? '#999' : musicState === 'birthday' ? '#FF69B4' : '#FFB6C1',
+            fontWeight: '400',
+            textAlign: 'right',
+            background: 'transparent',
+            padding: '2px 0',
           }}
-          title={soundEffectsMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {!soundEffectsMuted ? (
-              // Sound effects on icon (speaker)
-              <>
-                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34835 21.9979 12C21.9979 14.6517 20.9447 17.1947 19.07 19.07" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 12C17.0039 13.3308 16.4774 14.6024 15.54 15.54" stroke="#FF69B4" strokeWidth="2" strokeLinecap="round"/>
-              </>
-            ) : (
-              // Sound effects off icon (crossed out speaker)
-              <>
-                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <line x1="23" y1="9" x2="17" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="17" y1="9" x2="23" y2="15" stroke="#999" strokeWidth="2" strokeLinecap="round"/>
-              </>
-            )}
-          </svg>
-        </button>
+          {musicState === 'off' ? 'Music: OFF' : musicState === 'background' ? 'Music: Background Song' : 'Music: Happy Birthday ?'}
+        </p>
       </div>
 
       {isChaos && (
@@ -2232,40 +2360,133 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         </div>
       )}
 
-      {/* Gesture Hints - Outside Canvas */}
-      <div className="absolute bottom-20 left-4 z-10 pointer-events-none">
-        <div className="bg-black/60 backdrop-blur-md rounded-lg p-4 max-w-xs" style={{
-          border: '1px solid rgba(255, 182, 193, 0.3)',
-        }}>
-          <h3 className="text-sm font-semibold mb-2" style={{
-            fontFamily: "'Inter', sans-serif",
-            color: '#FFB6C1',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
+      {/* Gesture Hints - Desktop only (MediaPipe) */}
+      {!isMobile && (
+        <div className="absolute bottom-20 left-4 z-10 pointer-events-none">
+          <div className="bg-black/60 backdrop-blur-md rounded-lg p-4 max-w-xs" style={{
+            border: '1px solid rgba(255, 182, 193, 0.3)',
           }}>
-            Try These Gestures:
-          </h3>
-          <ul className="space-y-2 text-xs" style={{
-            fontFamily: "'Inter', sans-serif",
-            color: '#FFFFFF',
-            listStyle: 'none',
-            padding: 0,
-          }}>
-            <li className="flex items-start gap-2">
-              <span style={{ color: '#FF69B4' }}>?</span>
-              <span>Try pinching your fingers together to zoom!</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: '#FF69B4' }}>?</span>
-              <span>Wave your hand left/right to rotate the scene!</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span style={{ color: '#FF69B4' }}>?</span>
-              <span>Hold your hand up to advance photos!</span>
-            </li>
-          </ul>
+            <h3 className="text-sm font-semibold mb-2" style={{
+              fontFamily: "'Inter', sans-serif",
+              color: '#FFB6C1',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}>
+              Try These Gestures:
+            </h3>
+            <ul className="space-y-2 text-xs" style={{
+              fontFamily: "'Inter', sans-serif",
+              color: '#FFFFFF',
+              listStyle: 'none',
+              padding: 0,
+            }}>
+              <li className="flex items-start gap-2">
+                <span style={{ color: '#FF69B4' }}>?</span>
+                <span>Try pinching your fingers together to zoom!</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span style={{ color: '#FF69B4' }}>?</span>
+                <span>Wave your hand left/right to rotate the scene!</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span style={{ color: '#FF69B4' }}>?</span>
+                <span>Hold your hand up to advance photos!</span>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Camera Feed Display - Desktop only */}
+      {!isMobile && (
+        <div className="absolute bottom-4 right-4 z-10" style={{
+          width: '240px',
+          height: '180px',
+        }}>
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            border: '2px solid #FFB6C1',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 4px 15px rgba(255, 105, 180, 0.3)',
+          }}>
+            {cameraVideoRef ? (
+              <>
+                <video
+                  ref={displayVideoRef}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transform: 'scaleX(-1)', // Mirror the video
+                  }}
+                  autoPlay
+                  playsInline
+                  muted
+                />
+                {/* Gesture Detection Text */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '8px',
+                  right: '8px',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  backdropFilter: 'blur(5px)',
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 182, 193, 0.5)',
+                }}>
+                  <p style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '11px',
+                    color: '#FFB6C1',
+                    margin: 0,
+                    fontWeight: '500',
+                    textAlign: 'left',
+                  }}>
+                    {detectedGesture}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                padding: '20px',
+                textAlign: 'center',
+              }}>
+                <p style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '12px',
+                  color: '#FFB6C1',
+                  margin: '0 0 8px 0',
+                  fontWeight: '500',
+                }}>
+                  ? Camera Feed
+                </p>
+                <p style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '10px',
+                  color: '#999',
+                  margin: 0,
+                }}>
+                  {detectedGesture === 'Camera not available' || detectedGesture === 'MediaPipe not available'
+                    ? 'Waiting for camera...'
+                    : 'Initializing camera...'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 
       <Canvas
         className="w-full"
