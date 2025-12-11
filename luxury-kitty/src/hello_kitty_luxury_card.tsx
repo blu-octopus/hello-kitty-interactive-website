@@ -80,9 +80,9 @@ const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boo
 
   // --- B. Facial Features ---
   
-  // Dark Grey Eyes (OVAL/ELLIPSOID - wider horizontally) - same z axis as nose, more visible
-  const eyeR = (Math.pow((x - 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
-  const eyeL = (Math.pow((x + 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
+  // Dark Grey Eyes (OVAL/ELLIPSOID - wider horizontally) - z position at 1.0
+  const eyeR = (Math.pow((x - 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 1.0) / 0.5, 2)) <= 1;
+  const eyeL = (Math.pow((x + 1.2) / 0.9, 2) + Math.pow((y - 2.5) / 0.6, 2) + Math.pow((z - 1.0) / 0.5, 2)) <= 1;
 
   // Yellow Nose (Small Ellipsoid/Sphere) - closer to head center (z=1.2)
   const nose = (Math.pow(x / 0.5, 2) + Math.pow((y - 1.2) / 0.4, 2) + Math.pow((z - 2.0) / 0.5, 2)) <= 1;
@@ -106,7 +106,7 @@ const isInsideHelloKitty = (x: number, y: number, z: number, part?: string): boo
   const shirt = shirtDist >= 0.95 && shirtDist <= 1.05; // Surface only (within 5% threshold)
 
   // Pink Bow (Simple sphere approximation)
-  const bowCenter = (Math.pow((x - 3.0) / 0.5, 2) + Math.pow((y - 3.5) / 0.5, 2) + Math.pow(z / 0.5, 2)) <= 1;
+  const bowCenter = (Math.pow((x - 2.0) / 0.5, 2) + Math.pow((y - 3.5) / 0.5, 2) + Math.pow(z , 2)) <= 1;
 
   // --- D. Part Detection ---
   if (part === 'head') return head;
@@ -170,10 +170,10 @@ const generateEyePositions = (): Float32Array => {
   // Eyes based on new ellipsoid positions
   positions[0] = -1.2; // Left eye (viewer's right)
   positions[1] = 2.5;
-  positions[2] = 2.0;
+  positions[2] = 1.8; // Z position set to 1.02
   positions[3] = 1.2; // Right eye (viewer's left)
   positions[4] = 2.5;
-  positions[5] = 2.0;
+  positions[5] = 1.8; // Z position set to 1.0
   return positions;
 };
 
@@ -390,8 +390,31 @@ const generateFloatingObjects = (count: number): Array<{
   return objects;
 };
 
+// Smooth easing functions for Twine/Rive-style animations
 const easeInOutCubic = (t: number): number => {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
+
+// Smooth ease-out for "woosh" effect (like Rive/Twine)
+const easeOutCubic = (t: number): number => {
+  return 1 - Math.pow(1 - t, 3);
+};
+
+// Smooth ease-in for "click" effect (available for future use)
+// const easeInCubic = (t: number): number => {
+//   return t * t * t;
+// };
+
+// Smooth ease-in-out with more pronounced curve (Rive-style) (available for future use)
+// const easeInOutQuart = (t: number): number => {
+//   return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+// };
+
+// Smooth lerp with easing
+const smoothLerp = (current: number, target: number, speed: number, easing: (t: number) => number = easeOutCubic): number => {
+  const diff = target - current;
+  const easedSpeed = easing(Math.min(Math.abs(diff) * speed, 1));
+  return current + diff * easedSpeed;
 };
 
 
@@ -505,9 +528,10 @@ const HelloKittyParticle: React.FC<{
         targetZ += (baseZ * 0.6 + flowerZ * 0.4);
       }
 
-      currentPositions.current[idx] += (targetX - currentPositions.current[idx]) * lerpSpeed;
-      currentPositions.current[idx + 1] += (targetY - currentPositions.current[idx + 1]) * lerpSpeed;
-      currentPositions.current[idx + 2] += (targetZ - currentPositions.current[idx + 2]) * lerpSpeed;
+      // Smooth Rive-style particle movement
+      currentPositions.current[idx] = smoothLerp(currentPositions.current[idx], targetX, lerpSpeed * 10, easeOutCubic);
+      currentPositions.current[idx + 1] = smoothLerp(currentPositions.current[idx + 1], targetY, lerpSpeed * 10, easeOutCubic);
+      currentPositions.current[idx + 2] = smoothLerp(currentPositions.current[idx + 2], targetZ, lerpSpeed * 10, easeOutCubic);
 
       const matrix = new THREE.Matrix4();
       const scale = sizeVariations[i];
@@ -748,7 +772,9 @@ const Eyes: React.FC<{
       leftEyeTarget.current.y += Math.sin(spiralAngle * 2) * chaosRadius * 0.5;
       leftEyeTarget.current.z += Math.sin(spiralAngle) * spiralRadius + Math.sin(petalAngle) * petalRadius * 0.4;
     }
-    leftEyePos.current.lerp(leftEyeTarget.current, lerpSpeed);
+    // Smooth Rive-style eye movement
+    const eyeLerpSpeed = easeOutCubic(Math.min(lerpSpeed * 20, 1));
+    leftEyePos.current.lerp(leftEyeTarget.current, eyeLerpSpeed);
 
     // Update right eye position
     rightEyeTarget.current.set(eyeTargets[3], eyeTargets[4], eyeTargets[5]);
@@ -764,7 +790,7 @@ const Eyes: React.FC<{
       rightEyeTarget.current.y += Math.sin(spiralAngle * 2) * chaosRadius * 0.5;
       rightEyeTarget.current.z += Math.sin(spiralAngle) * spiralRadius + Math.sin(petalAngle) * petalRadius * 0.4;
     }
-    rightEyePos.current.lerp(rightEyeTarget.current, lerpSpeed);
+    rightEyePos.current.lerp(rightEyeTarget.current, eyeLerpSpeed);
 
     if (leftEyeRef.current) {
       leftEyeRef.current.position.copy(leftEyePos.current);
@@ -884,7 +910,7 @@ const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotati
     const baseY = 1.4; // Middle whisker y position
     const ySpacing = 0.4; // Closer together (reduced from 0.6)
     const startX = 2.0; // Start point closer to face (inside)
-    const zPos = 1.6;
+    const zPos = 1.4;
     // Rotation angle: 10 degrees = 0.1745 radians
     const angle = 10 * (Math.PI / 180);
     
@@ -986,10 +1012,12 @@ const FloatingObjects: React.FC<{
   const materialRefs = useRef<Array<THREE.MeshStandardMaterial | null>>(objects.map(() => null));
   const orbitalTimeRef = useRef(0);
   const magicTimeRef = useRef(0);
+  const fadeInTimeRef = useRef(0); // Track fade-in time for objects
 
   useFrame((_, delta) => {
     orbitalTimeRef.current += delta;
     magicTimeRef.current += delta * 0.5; // Slower time for magical effects
+    fadeInTimeRef.current += delta; // Track total time for fade-in animation
     
     if (groupRef.current) {
       if (deviceRotation) {
@@ -1012,14 +1040,31 @@ const FloatingObjects: React.FC<{
       }
     });
 
-    // Update magical effects: pulsing glow, fade, sparkle
+    // Update magical effects: pulsing glow, fade, sparkle with fade-in animation
     materialRefs.current.forEach((material, idx) => {
       if (material && objects[idx]) {
         const obj = objects[idx];
         
+        // Fade-in animation: 300ms initial fade, full brightness at 800ms
+        const fadeInDuration = 0.8; // 800ms in seconds
+        const initialFadeDuration = 0.3; // 300ms in seconds
+        let fadeInMultiplier = 1.0;
+        
+        if (fadeInTimeRef.current < fadeInDuration) {
+          if (fadeInTimeRef.current < initialFadeDuration) {
+            // Initial 300ms: fade in from 0 to 0.5
+            fadeInMultiplier = (fadeInTimeRef.current / initialFadeDuration) * 0.5;
+          } else {
+            // Remaining time to 800ms: fade from 0.5 to 1.0
+            const remainingTime = fadeInTimeRef.current - initialFadeDuration;
+            const remainingDuration = fadeInDuration - initialFadeDuration;
+            fadeInMultiplier = 0.5 + (remainingTime / remainingDuration) * 0.5;
+          }
+        }
+        
         // Pulsing glow effect
         const pulse = Math.sin(magicTimeRef.current * obj.pulseSpeed + obj.pulsePhase) * 0.3 + 0.7; // 0.4 to 1.0
-        const glow = obj.glowIntensity * pulse;
+        const glow = obj.glowIntensity * pulse * fadeInMultiplier;
         
         // Fade effect (breathing)
         const fade = Math.sin(magicTimeRef.current * 0.8 + obj.fadePhase) * 0.2 + 0.8; // 0.6 to 1.0
@@ -1027,9 +1072,9 @@ const FloatingObjects: React.FC<{
         // Sparkle effect (twinkling)
         const sparkle = Math.sin(magicTimeRef.current * 2 + obj.pulsePhase) * obj.sparkleIntensity * 0.5 + 1.0;
         
-        // Update material properties
+        // Update material properties with fade-in
         material.emissiveIntensity = glow * sparkle;
-        material.opacity = 0.2 + (fade * 0.4); // 0.2 to 0.6 opacity range (more fade)
+        material.opacity = (0.2 + (fade * 0.4)) * fadeInMultiplier; // 0.2 to 0.6 opacity range with fade-in
         material.emissive.setHex(parseInt(obj.color.replace('#', ''), 16));
       }
     });
@@ -1108,13 +1153,33 @@ const PhotoFrame: React.FC<{
   useEffect(() => {
     if (imageUrl) {
       console.log('Loading polaroid image:', imageUrl);
-      // Use the URL directly from import.meta.glob - it should be a valid path
+      
+      // Normalize image URL for both dev and production (GitHub Pages)
+      let normalizedUrl = imageUrl;
+      
+      // If URL doesn't start with http/https, ensure it's a valid path
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        // Remove leading slash if present (Vite handles this)
+        if (normalizedUrl.startsWith('/')) {
+          normalizedUrl = normalizedUrl.substring(1);
+        }
+        // For GitHub Pages, ensure base path is included if needed
+        if (import.meta.env.PROD && !normalizedUrl.startsWith('hello-kitty-interactive-website/')) {
+          // Vite's import.meta.glob should already handle this, but ensure it works
+          normalizedUrl = normalizedUrl;
+        }
+      }
+      
+      // Use the normalized URL
       loader.current.load(
-        imageUrl,
+        normalizedUrl,
         (loadedTexture) => {
-          console.log('Successfully loaded image:', imageUrl);
+          console.log('Successfully loaded image:', normalizedUrl);
           loadedTexture.flipY = false; // Keep original orientation
           loadedTexture.colorSpace = THREE.SRGBColorSpace;
+          loadedTexture.generateMipmaps = true;
+          loadedTexture.minFilter = THREE.LinearFilter;
+          loadedTexture.magFilter = THREE.LinearFilter;
           
           // Crop GIF to 3:4 aspect ratio if it's a GIF
           if (isGif && loadedTexture.image) {
@@ -1174,27 +1239,53 @@ const PhotoFrame: React.FC<{
         },
         undefined,
         (error) => {
-          console.warn(`Failed to load image ${imageUrl}:`, error);
-          // Try alternative: use the URL as-is but ensure it's a valid path
-          const altUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-          if (altUrl !== imageUrl) {
+          console.warn(`Failed to load image ${normalizedUrl}:`, error);
+          // Try alternative paths for different environments
+          const alternatives = [
+            imageUrl, // Original URL
+            imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`, // With leading slash
+            imageUrl.startsWith('/hello-kitty-interactive-website/') ? imageUrl : `/hello-kitty-interactive-website/${imageUrl.replace(/^\//, '')}`, // With base path
+            imageUrl.replace(/^\/src\//, '/'), // Remove /src/ prefix if present
+          ].filter((url, idx, arr) => arr.indexOf(url) === idx); // Remove duplicates
+          
+          let attemptIndex = 0;
+          const tryNextAlternative = () => {
+            if (attemptIndex >= alternatives.length) {
+              console.error('All image loading attempts failed for:', imageUrl);
+              setTexture(null);
+              return;
+            }
+            
+            const altUrl = alternatives[attemptIndex];
+            attemptIndex++;
+            
+            if (altUrl === normalizedUrl) {
+              // Skip if it's the same as what we already tried
+              tryNextAlternative();
+              return;
+            }
+            
+            console.log(`Trying alternative path ${attemptIndex}/${alternatives.length}:`, altUrl);
             loader.current.load(
               altUrl,
               (loadedTexture) => {
-                console.log('Successfully loaded image with alt path:', altUrl);
+                console.log('Successfully loaded image with alternative path:', altUrl);
                 loadedTexture.flipY = false;
                 loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                loadedTexture.generateMipmaps = true;
+                loadedTexture.minFilter = THREE.LinearFilter;
+                loadedTexture.magFilter = THREE.LinearFilter;
                 setTexture(loadedTexture);
               },
               undefined,
               (error2) => {
-                console.error('Failed to load image with alternative path:', error2);
-                setTexture(null);
+                console.warn(`Alternative path ${attemptIndex} failed:`, error2);
+                tryNextAlternative();
               }
             );
-          } else {
-            setTexture(null);
-          }
+          };
+          
+          tryNextAlternative();
         }
       );
     } else {
@@ -1233,19 +1324,20 @@ const PhotoFrame: React.FC<{
         
         maxScale = Math.min(maxScale, 2.5);
 
-        // Zoom to center, face camera (flat side showing)
-        currentPos.current[0] += (0 - currentPos.current[0]) * 0.1;
-        currentPos.current[1] += (0 - currentPos.current[1]) * 0.1;
-        currentPos.current[2] += (3 - currentPos.current[2]) * 0.1; // Closer for better view
-        currentScale.current += (maxScale - currentScale.current) * 0.1;
+        // Zoom to center, face camera (flat side showing) - Smooth Rive-style easing (slower)
+        currentPos.current[0] = smoothLerp(currentPos.current[0], 0, 0.08, easeOutCubic);
+        currentPos.current[1] = smoothLerp(currentPos.current[1], 0, 0.08, easeOutCubic);
+        currentPos.current[2] = smoothLerp(currentPos.current[2], 3, 0.08, easeOutCubic); // Closer for better view
+        currentScale.current = smoothLerp(currentScale.current, maxScale, 0.08, easeOutCubic);
         
         // Face camera directly
         frameRef.current.lookAt(0, 0, 10);
       } else {
-        currentPos.current[0] += (position[0] - currentPos.current[0]) * 0.1;
-        currentPos.current[1] += (position[1] - currentPos.current[1]) * 0.1;
-        currentPos.current[2] += (position[2] - currentPos.current[2]) * 0.1;
-        currentScale.current += (0.3 - currentScale.current) * 0.1;
+        // Return to original position - Smooth Rive-style easing (slower)
+        currentPos.current[0] = smoothLerp(currentPos.current[0], position[0], 0.06, easeOutCubic);
+        currentPos.current[1] = smoothLerp(currentPos.current[1], position[1], 0.06, easeOutCubic);
+        currentPos.current[2] = smoothLerp(currentPos.current[2], position[2], 0.06, easeOutCubic);
+        currentScale.current = smoothLerp(currentScale.current, 0.3, 0.06, easeOutCubic);
       }
       frameRef.current.position.set(...currentPos.current);
       frameRef.current.scale.set(currentScale.current, currentScale.current, currentScale.current);
@@ -1259,21 +1351,30 @@ const PhotoFrame: React.FC<{
 
   return (
     <group ref={frameRef} position={position} rotation={rotation}>
-      {/* Front Frame - Pure white, no glow */}
+      {/* Front Frame - Pure white, no glow, matte finish */}
       <mesh>
         <boxGeometry args={[frameWidth, frameHeight, 0.05]} />
-        <meshStandardMaterial color={COLORS.white} emissive={COLORS.white} emissiveIntensity={0} />
+        <meshStandardMaterial 
+          color="#FFFFFF" 
+          emissive="#000000" 
+          emissiveIntensity={0}
+          metalness={0}
+          roughness={0.9}
+        />
       </mesh>
       {/* Photo Area - front side - ensure white background and image visible */}
-      <mesh position={[0, 0.15, 0.03]}>
+      <mesh position={[0, 0.15, 0.05]}>
         <planeGeometry args={[photoWidth, photoHeight]} />
         <meshStandardMaterial
           map={texture || null}
-          color={texture ? COLORS.white : '#F5F5F5'}
-          emissive={COLORS.white}
+          color={texture ? '#FFFFFF' : '#F5F5F5'}
+          emissive="#000000"
           emissiveIntensity={0}
           side={THREE.DoubleSide}
-          transparent={false}
+          transparent={!texture}
+          opacity={texture ? 1 : 0.95}
+          metalness={0}
+          roughness={0.8}
         />
       </mesh>
       {/* Opening message display (no image) */}
@@ -1318,56 +1419,72 @@ const PhotoFrame: React.FC<{
           </div>
         </Html>
       )}
-      {/* Back Side - Solid Color */}
+      {/* Back Side - Solid White, no glow */}
       <mesh position={[0, 0, -0.05]}>
         <planeGeometry args={[frameWidth, frameHeight]} />
-        <meshStandardMaterial color={COLORS.white} emissive={COLORS.white} emissiveIntensity={0} />
+        <meshStandardMaterial 
+          color="#FFFFFF" 
+          emissive="#000000" 
+          emissiveIntensity={0}
+          metalness={0}
+          roughness={0.9}
+        />
       </mesh>
-      {/* Label Area */}
+      {/* Label Area - White, no glow */}
       <mesh position={[0, -0.7, 0.03]}>
         <planeGeometry args={[photoWidth, 0.2]} />
-        <meshStandardMaterial color={COLORS.white} emissive={COLORS.white} emissiveIntensity={0} />
+        <meshStandardMaterial 
+          color="#FFFFFF" 
+          emissive="#000000" 
+          emissiveIntensity={0}
+          metalness={0}
+          roughness={0.9}
+        />
       </mesh>
-      {/* Custom text label when zoomed - wider to fit all text */}
+      {/* Custom text label when zoomed - wider to fit all text - Always visible when zoomed */}
       {isZoomed && customText && (
-        <Html position={[0, -0.9, 0.06]} center>
+        <Html position={[0, -0.9, 0.08]} center>
           <div style={{
             width: `${photoWidth * 120}px`,
             maxWidth: `${photoWidth * 120}px`,
             minWidth: `${photoWidth * 100}px`,
             textAlign: 'center',
-            fontSize: '12px',
-            color: 'black',
+            fontSize: 'clamp(11px, 2vw, 14px)',
+            color: '#000000',
             fontWeight: 'bold',
-            padding: '6px 10px',
-            backgroundColor: 'white',
-            borderRadius: '4px',
+            padding: '8px 12px',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
             whiteSpace: 'normal',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            zIndex: 1000,
           }}>
             {customText}
           </div>
         </Html>
       )}
-      {/* Personalized message on polaroid */}
+      {/* Personalized message on polaroid - Always visible when zoomed */}
       {isZoomed && personalizedMessage && (
-        <Html position={[0, -1.15, 0.06]} center>
+        <Html position={[0, -1.15, 0.08]} center>
           <div style={{
             width: `${photoWidth * 120}px`,
             maxWidth: `${photoWidth * 120}px`,
             minWidth: `${photoWidth * 100}px`,
             textAlign: 'center',
-            fontSize: '11px',
-            color: '#666',
+            fontSize: 'clamp(10px, 1.8vw, 13px)',
+            color: '#333333',
             fontStyle: 'italic',
-            padding: '4px 8px',
-            backgroundColor: '#FFF9E6',
-            borderRadius: '4px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255, 249, 230, 0.95)',
+            borderRadius: '6px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
             whiteSpace: 'normal',
-            marginTop: '4px',
+            marginTop: '6px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000,
           }}>
             {personalizedMessage}
           </div>
@@ -1385,15 +1502,17 @@ const loadGalleryImages = () => {
       import: 'default' 
     }) as Record<string, string>;
     
-    return Object.entries(images)
+    const result = Object.entries(images)
       .sort(([a], [b]) => {
         const numA = parseInt(a.match(/\d+/)?.[0] || '0');
         const numB = parseInt(b.match(/\d+/)?.[0] || '0');
         return numA - numB;
       })
       .map(([path, url]) => ({ path, url: url as string }));
+    
+    return result;
   } catch (e) {
-    console.warn('Could not load gallery images:', e);
+    console.error('? Could not load gallery images:', e);
     return [];
   }
 };
@@ -1586,8 +1705,9 @@ const CameraController: React.FC<{ isChaos: boolean }> = ({ isChaos }) => {
       targetZ.current = 18; // Closer to show face
       targetY.current = 1; // Slightly above to show face
     }
-    camera.position.z += (targetZ.current - camera.position.z) * 0.05;
-    camera.position.y += (targetY.current - camera.position.y) * 0.05;
+    // Smooth Rive-style camera movement
+    camera.position.z = smoothLerp(camera.position.z, targetZ.current, 0.12, easeOutCubic);
+    camera.position.y = smoothLerp(camera.position.y, targetY.current, 0.12, easeOutCubic);
   });
 
   return null;
@@ -1602,7 +1722,7 @@ const Scene: React.FC<{
 }> = ({ isChaos, mouseRotation, deviceRotation, onProgressChange, onPhotoChange }) => {
   // Increased particle counts for denser appearance, especially head
   const headCount = 3000; // More orbs filling head space
-  const bodyCount = 1800;
+  const bodyCount = 3000;
   const earCount = 400; // Ears
   // const clothesCount = 1200; // clothes disabled
   const bowCount = 300;
@@ -1781,6 +1901,7 @@ const Scene: React.FC<{
 export const HelloKittyLuxuryCard: React.FC = () => {
   const [showTitleScreen, setShowTitleScreen] = useState(true); // Title screen state
   const [titleAnimation, setTitleAnimation] = useState<'closed' | 'opening' | 'open'>('closed'); // Card opening animation
+  const [fadeOut, setFadeOut] = useState(false); // Fade out state for smooth transition
   const [isChaos, setIsChaos] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -2121,12 +2242,13 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Only enable device orientation on desktop (not mobile) to keep Hello Kitty upright on mobile
+    // Enable device orientation for gyroscope on both desktop and mobile
     // Check for browser compatibility
-    if (!isMobile && typeof window !== 'undefined' && 
+    if (typeof window !== 'undefined' && 
         (window.DeviceOrientationEvent || (window as any).DeviceOrientationEvent)) {
       const handleOrientation = (e: DeviceOrientationEvent) => {
         if (e.beta !== null && e.gamma !== null && e.alpha !== null) {
+          // On mobile, apply rotation but keep Hello Kitty responsive to gyroscope
           setDeviceRotation({
             x: (e.beta - 90) * (Math.PI / 180),
             y: e.gamma * (Math.PI / 180),
@@ -2138,10 +2260,9 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       window.addEventListener('deviceorientation', handleOrientation);
       return () => window.removeEventListener('deviceorientation', handleOrientation);
     } else {
-      // On mobile, don't apply device rotation - keep Hello Kitty upright
       setDeviceRotation(undefined);
     }
-  }, [isMobile]);
+  }, []);
 
   // Camera gesture controls using MediaPipe or webcam (desktop only)
   useEffect(() => {
@@ -2370,13 +2491,21 @@ export const HelloKittyLuxuryCard: React.FC = () => {
             maxWidth: '100vw',
             maxHeight: '100vh',
             overflow: 'hidden',
+            opacity: fadeOut ? 0 : 1,
+            transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           }}
           onClick={() => {
             if (titleAnimation === 'open') {
               setTitleAnimation('opening');
+              // Start fade out after spin animation begins
+              setTimeout(() => {
+                setFadeOut(true);
+              }, 300); // Fade starts mid-spin for smoother transition
+              // Hide title screen after fade completes
               setTimeout(() => {
                 setShowTitleScreen(false);
-              }, 800);
+                setFadeOut(false); // Reset for potential reuse
+              }, 1000); // Total animation time: 300ms spin + 700ms fade
             }
           }}
         >
@@ -2394,7 +2523,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
                 : titleAnimation === 'opening'
                 ? 'rotateY(-90deg) scale(0.8)'
                 : 'rotateY(0deg) scale(1)',
-              transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
               opacity: titleAnimation === 'opening' ? 0 : 1,
             }}
           >
@@ -2543,7 +2672,14 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
       {/* Regular Title (hidden when title screen is shown) */}
       {!showTitleScreen && (
-        <div className="absolute top-4 left-4 z-10 pointer-events-none">
+        <div 
+          className="absolute top-4 left-4 z-10 pointer-events-none"
+          style={{
+            opacity: showTitleScreen ? 0 : 1,
+            transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transitionDelay: showTitleScreen ? '0s' : '0.3s', // Fade in after title fades out
+          }}
+        >
           <h1 className="text-3xl mb-2" style={{ 
             fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
             fontWeight: 'bold',
@@ -2568,7 +2704,14 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
 
       {/* Music and Volume Toggle Buttons */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
+      <div 
+        className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1"
+        style={{
+          opacity: showTitleScreen ? 0 : 1,
+          transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transitionDelay: showTitleScreen ? '0s' : '0.3s', // Fade in after title fades out
+        }}
+      >
         <div className="flex gap-2">
           {/* Music Toggle Button - Cycles: off -> background -> birthday -> off */}
           <button
@@ -2583,7 +2726,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
             }}
             className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
             style={{
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: '14px',
               fontWeight: '600',
               color: '#2D3748',
@@ -2631,7 +2774,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
             onClick={() => setSoundEffectsMuted(!soundEffectsMuted)}
             className="px-3 py-2 rounded-full transition-all duration-300 transform active:scale-95 select-none"
             style={{
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: '14px',
               fontWeight: '600',
               color: '#2D3748',
@@ -2666,7 +2809,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         <p 
           className="text-xs pointer-events-none"
           style={{
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
             color: musicState === 'off' ? '#999' : musicState === 'birthday' ? '#FF69B4' : '#FFB6C1',
             fontWeight: '400',
             textAlign: 'right',
@@ -2705,16 +2848,16 @@ export const HelloKittyLuxuryCard: React.FC = () => {
             border: '1px solid rgba(255, 182, 193, 0.3)',
           }}>
             <h3 className="text-sm font-semibold mb-2" style={{
-              fontFamily: "'Inter', sans-serif",
-              color: '#FFB6C1',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-            }}>
-              Try These Gestures:
-            </h3>
-            <ul className="space-y-2 text-xs" style={{
-              fontFamily: "'Inter', sans-serif",
-              color: '#FFFFFF',
+                  fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
+                  color: '#FFB6C1',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}>
+                  Try These Gestures:
+                </h3>
+                <ul className="space-y-2 text-xs" style={{
+                  fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
+                  color: '#FFFFFF',
               listStyle: 'none',
               padding: 0,
             }}>
@@ -2779,7 +2922,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
                   border: '1px solid rgba(255, 182, 193, 0.5)',
                 }}>
                   <p style={{
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
                     fontSize: '11px',
                     color: '#FFB6C1',
                     margin: 0,
@@ -2801,7 +2944,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
                 textAlign: 'center',
               }}>
                 <p style={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
                   fontSize: '12px',
                   color: '#FFB6C1',
                   margin: '0 0 8px 0',
@@ -2810,7 +2953,7 @@ export const HelloKittyLuxuryCard: React.FC = () => {
                   ? Camera Feed
                 </p>
                 <p style={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', sans-serif",
                   fontSize: '10px',
                   color: '#999',
                   margin: 0,
@@ -2832,6 +2975,9 @@ export const HelloKittyLuxuryCard: React.FC = () => {
           height: '90vh',
           maxHeight: '100vh',
           maxWidth: '100vw',
+          opacity: showTitleScreen ? 0 : 1,
+          transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transitionDelay: showTitleScreen ? '0s' : '0.3s', // Fade in after title fades out
         }}
         gl={{ antialias: true, alpha: false }}
         camera={{ position: [0, 0, cameraZoom], fov: 50 }}
@@ -2865,22 +3011,22 @@ export const HelloKittyLuxuryCard: React.FC = () => {
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center gap-3">
         <button
           className="px-8 py-4 rounded-2xl transition-all duration-300 transform active:scale-95 select-none"
-          style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: '15px',
-            fontWeight: '600',
-            color: '#2D3748',
-            background: isHolding 
-              ? '#FFE5F1' 
-              : '#FFF0F8',
-            border: '2px solid #FFB6C1',
-            boxShadow: isHolding 
-              ? '0 8px 24px rgba(255, 182, 193, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6)' 
-              : '0 4px 16px rgba(255, 182, 193, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-            transform: isHolding ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
-            backdropFilter: 'blur(10px)',
-            letterSpacing: '0.3px',
-          }}
+            style={{
+              fontFamily: isMobile ? "'Comic Sans MS', 'Marker Felt', cursive" : "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontSize: '15px',
+              fontWeight: '600',
+              color: '#2D3748',
+              background: isHolding
+                ? '#FFE5F1'
+                : '#FFF0F8',
+              border: '2px solid #FFB6C1',
+              boxShadow: isHolding
+                ? '0 8px 24px rgba(255, 182, 193, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
+                : '0 4px 16px rgba(255, 182, 193, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              transform: isHolding ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
+              backdropFilter: 'blur(10px)',
+              letterSpacing: '0.3px',
+            }}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onTouchStart={handleTouchStart}
