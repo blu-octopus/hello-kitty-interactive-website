@@ -458,8 +458,10 @@ const HelloKittyParticle: React.FC<{
       groupRef.current.rotation.z = deviceRotation.z * 0.3;
     }
 
-    groupRef.current.rotation.y += mouseRotation.x * 0.05;
-    groupRef.current.rotation.x += mouseRotation.y * 0.05;
+    // Slower, eased mouse rotation with smooth transitions
+    const rotationSpeed = 0.015; // Reduced from 0.05 for slower rotation
+    groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+    groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     
     if (isChaos) {
       chaosTime.current += delta * 0.3;
@@ -477,13 +479,30 @@ const HelloKittyParticle: React.FC<{
       let targetZ = targetPositions[idx + 2];
 
       if (isChaos) {
+        // Pattern-based chaos spread - creates beautiful geometric patterns
         const chaosRadius = 15 * easedTime;
-        const angle = (i / count) * Math.PI * 2 + chaosTime.current;
-        const wave = Math.sin(chaosTime.current * 2 + i * 0.1) * 0.5 + 0.5;
         
-        targetX += Math.cos(angle) * chaosRadius * wave;
-        targetY += Math.sin(angle * 2) * chaosRadius * wave;
-        targetZ += Math.sin(angle * 3) * chaosRadius * wave;
+        // Create spiral pattern with multiple layers
+        const spiralAngle = (i / count) * Math.PI * 8; // Multiple rotations for spiral
+        const spiralRadius = (i / count) * chaosRadius; // Expand from center
+        
+        // Add vertical wave pattern
+        const verticalWave = Math.sin(spiralAngle * 0.5 + chaosTime.current * 2) * 0.4;
+        
+        // Create flower/star pattern with multiple petals
+        const petalCount = 6; // 6-petal flower
+        const petalAngle = (i / count) * Math.PI * 2 * petalCount;
+        const petalRadius = chaosRadius * (0.5 + Math.sin(petalAngle) * 0.3);
+        
+        // Combine patterns: spiral base with flower overlay
+        const baseX = Math.cos(spiralAngle) * spiralRadius;
+        const baseZ = Math.sin(spiralAngle) * spiralRadius;
+        const flowerX = Math.cos(petalAngle) * petalRadius;
+        const flowerZ = Math.sin(petalAngle) * petalRadius;
+        
+        targetX += (baseX * 0.6 + flowerX * 0.4);
+        targetY += verticalWave * chaosRadius + Math.sin(spiralAngle * 2) * chaosRadius * 0.3;
+        targetZ += (baseZ * 0.6 + flowerZ * 0.4);
       }
 
       currentPositions.current[idx] += (targetX - currentPositions.current[idx]) * lerpSpeed;
@@ -576,8 +595,10 @@ const Arms: React.FC<{
         groupRef.current.rotation.y = deviceRotation.y * 0.5;
         groupRef.current.rotation.z = deviceRotation.z * 0.3;
       }
-      groupRef.current.rotation.y += mouseRotation.x * 0.05;
-      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+      // Slower, eased mouse rotation
+      const rotationSpeed = 0.015; // Reduced from 0.05 for slower rotation
+      groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+      groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     }
   });
 
@@ -698,8 +719,10 @@ const Eyes: React.FC<{
         groupRef.current.rotation.y = deviceRotation.y * 0.5;
         groupRef.current.rotation.z = deviceRotation.z * 0.3;
       }
-      groupRef.current.rotation.y += mouseRotation.x * 0.05;
-      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+      // Slower, eased mouse rotation
+      const rotationSpeed = 0.015; // Reduced from 0.05 for slower rotation
+      groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+      groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     }
 
     if (isChaos) {
@@ -714,22 +737,32 @@ const Eyes: React.FC<{
     // Update left eye position
     leftEyeTarget.current.set(eyeTargets[0], eyeTargets[1], eyeTargets[2]);
     if (isChaos) {
+      // Pattern-based chaos - spiral with flower overlay
       const chaosRadius = 15 * easedTime;
-      const angle = chaosTime.current;
-      leftEyeTarget.current.x += Math.cos(angle) * chaosRadius;
-      leftEyeTarget.current.y += Math.sin(angle * 2) * chaosRadius;
-      leftEyeTarget.current.z += Math.sin(angle * 3) * chaosRadius;
+      const spiralAngle = chaosTime.current;
+      const spiralRadius = chaosRadius * 0.6;
+      const petalAngle = chaosTime.current * 2;
+      const petalRadius = chaosRadius * (0.5 + Math.sin(petalAngle) * 0.3);
+      
+      leftEyeTarget.current.x += Math.cos(spiralAngle) * spiralRadius + Math.cos(petalAngle) * petalRadius * 0.4;
+      leftEyeTarget.current.y += Math.sin(spiralAngle * 2) * chaosRadius * 0.5;
+      leftEyeTarget.current.z += Math.sin(spiralAngle) * spiralRadius + Math.sin(petalAngle) * petalRadius * 0.4;
     }
     leftEyePos.current.lerp(leftEyeTarget.current, lerpSpeed);
 
     // Update right eye position
     rightEyeTarget.current.set(eyeTargets[3], eyeTargets[4], eyeTargets[5]);
     if (isChaos) {
+      // Pattern-based chaos - opposite spiral for right eye
       const chaosRadius = 15 * easedTime;
-      const angle = chaosTime.current + Math.PI;
-      rightEyeTarget.current.x += Math.cos(angle) * chaosRadius;
-      rightEyeTarget.current.y += Math.sin(angle * 2) * chaosRadius;
-      rightEyeTarget.current.z += Math.sin(angle * 3) * chaosRadius;
+      const spiralAngle = chaosTime.current + Math.PI;
+      const spiralRadius = chaosRadius * 0.6;
+      const petalAngle = chaosTime.current * 2 + Math.PI;
+      const petalRadius = chaosRadius * (0.5 + Math.sin(petalAngle) * 0.3);
+      
+      rightEyeTarget.current.x += Math.cos(spiralAngle) * spiralRadius + Math.cos(petalAngle) * petalRadius * 0.4;
+      rightEyeTarget.current.y += Math.sin(spiralAngle * 2) * chaosRadius * 0.5;
+      rightEyeTarget.current.z += Math.sin(spiralAngle) * spiralRadius + Math.sin(petalAngle) * petalRadius * 0.4;
     }
     rightEyePos.current.lerp(rightEyeTarget.current, lerpSpeed);
 
@@ -792,8 +825,10 @@ const Nose: React.FC<{
         groupRef.current.rotation.y = deviceRotation.y * 0.5;
         groupRef.current.rotation.z = deviceRotation.z * 0.3;
       }
-      groupRef.current.rotation.y += mouseRotation.x * 0.05;
-      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+      // Slower, eased mouse rotation
+      const rotationSpeed = 0.015; // Reduced from 0.05 for slower rotation
+      groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+      groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     }
 
     if (isChaos) {
@@ -891,8 +926,10 @@ const Whiskers: React.FC<{ mouseRotation: { x: number; y: number }; deviceRotati
         groupRef.current.rotation.y = deviceRotation.y * 0.5;
         groupRef.current.rotation.z = deviceRotation.z * 0.3;
       }
-      groupRef.current.rotation.y += mouseRotation.x * 0.05;
-      groupRef.current.rotation.x += mouseRotation.y * 0.05;
+      // Slower, eased mouse rotation
+      const rotationSpeed = 0.015; // Reduced from 0.05 for slower rotation
+      groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+      groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     }
   });
 
@@ -960,8 +997,10 @@ const FloatingObjects: React.FC<{
         groupRef.current.rotation.y = deviceRotation.y * 0.3;
         groupRef.current.rotation.z = deviceRotation.z * 0.2;
       }
-      groupRef.current.rotation.y += mouseRotation.x * 0.02;
-      groupRef.current.rotation.x += mouseRotation.y * 0.02;
+      // Slower, eased mouse rotation for floating objects
+      const rotationSpeed = 0.008; // Even slower for floating objects
+      groupRef.current.rotation.y += mouseRotation.x * rotationSpeed;
+      groupRef.current.rotation.x += mouseRotation.y * rotationSpeed;
     }
     
     // Self-rotate each object slowly
@@ -1182,9 +1221,10 @@ const PhotoFrame: React.FC<{
         let maxScale = 1.0;
         
         if (isMobile) {
-          const maxWidth = size.width * 0.9;
-          const frameWidth = 1.2;
-          maxScale = (maxWidth / viewport.width) / frameWidth;
+          // On mobile, polaroid should be 90% of canvas height
+          const canvasHeight = viewport.height;
+          const frameHeight = 1.6; // Polaroid frame height
+          maxScale = (canvasHeight * 0.9) / frameHeight;
         } else {
           const maxHeight = viewport.height * 0.6;
           const frameHeight = 1.5;
@@ -1739,6 +1779,8 @@ const Scene: React.FC<{
 };
 
 export const HelloKittyLuxuryCard: React.FC = () => {
+  const [showTitleScreen, setShowTitleScreen] = useState(true); // Title screen state
+  const [titleAnimation, setTitleAnimation] = useState<'closed' | 'opening' | 'open'>('closed'); // Card opening animation
   const [isChaos, setIsChaos] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -2053,6 +2095,17 @@ export const HelloKittyLuxuryCard: React.FC = () => {
     }
   }, [soundEffectsMuted]);
 
+  // Trigger card opening animation on mount
+  useEffect(() => {
+    if (showTitleScreen) {
+      // Start with closed card, then open it
+      setTitleAnimation('closed');
+      setTimeout(() => {
+        setTitleAnimation('open');
+      }, 300);
+    }
+  }, [showTitleScreen]);
+
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -2068,8 +2121,10 @@ export const HelloKittyLuxuryCard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Only enable device rotation on desktop (not mobile) to keep Hello Kitty upright on mobile
-    if (!isMobile && typeof window !== 'undefined' && window.DeviceOrientationEvent) {
+    // Only enable device orientation on desktop (not mobile) to keep Hello Kitty upright on mobile
+    // Check for browser compatibility
+    if (!isMobile && typeof window !== 'undefined' && 
+        (window.DeviceOrientationEvent || (window as any).DeviceOrientationEvent)) {
       const handleOrientation = (e: DeviceOrientationEvent) => {
         if (e.beta !== null && e.gamma !== null && e.alpha !== null) {
           setDeviceRotation({
@@ -2203,16 +2258,24 @@ export const HelloKittyLuxuryCard: React.FC = () => {
     setTargetMouseRotation({ x, y });
   }, []);
 
-  // Ease mouse rotation in and out
+  // Ease mouse rotation in and out with smooth easing function
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMouseRotation((prev) => ({
-        x: prev.x + (targetMouseRotation.x - prev.x) * 0.1, // Ease in/out
-        y: prev.y + (targetMouseRotation.y - prev.y) * 0.1,
-      }));
-    }, 16); // ~60fps
-
-    return () => clearInterval(interval);
+    let animationFrameId: number;
+    const updateRotation = () => {
+      setMouseRotation((prev) => {
+        const dx = targetMouseRotation.x - prev.x;
+        const dy = targetMouseRotation.y - prev.y;
+        // Use smooth easing for gradual acceleration/deceleration
+        const easeFactor = 0.08; // Slower easing for smoother, more controlled motion
+        return {
+          x: prev.x + dx * easeFactor,
+          y: prev.y + dy * easeFactor,
+        };
+      });
+      animationFrameId = requestAnimationFrame(updateRotation);
+    };
+    animationFrameId = requestAnimationFrame(updateRotation);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [targetMouseRotation]);
 
   // Crescendo buildup sound when holding
@@ -2272,10 +2335,13 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
   return (
     <div
-      className="relative w-full h-screen overflow-hidden"
+      className="relative w-full overflow-hidden"
       style={{
         background: 'radial-gradient(ellipse at center, #1a0a1a 0%, #000000 70%)',
         backgroundSize: '100% 100%',
+        height: '100vh',
+        maxHeight: '100vh',
+        maxWidth: '100vw',
       }}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
@@ -2290,27 +2356,215 @@ export const HelloKittyLuxuryCard: React.FC = () => {
         filter: 'blur(60px)',
         pointerEvents: 'none',
       }} />
-      <div className="absolute top-4 left-4 z-10 pointer-events-none">
-        <h1 className="text-3xl mb-2" style={{ 
-          fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
-          fontWeight: 'bold',
-          color: '#FF69B4',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-          letterSpacing: '1px'
-        }}>
-          Hello Kitty
-        </h1>
-        <div className="px-3 py-1.5 rounded-full inline-block" style={{
-          background: 'linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-        }}>
-          <h2 className="text-sm font-semibold" style={{ 
-            fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
-            color: '#FFFFFF',
-            fontWeight: '600'
-          }}>Interactive Experience</h2>
+      
+      {/* Title Screen - Card Opening Animation */}
+      {showTitleScreen && (
+        <div 
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(10px)',
+            cursor: titleAnimation === 'open' ? 'pointer' : 'default',
+            width: '100vw',
+            height: '100vh',
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            overflow: 'hidden',
+          }}
+          onClick={() => {
+            if (titleAnimation === 'open') {
+              setTitleAnimation('opening');
+              setTimeout(() => {
+                setShowTitleScreen(false);
+              }, 800);
+            }
+          }}
+        >
+          {/* Card Opening Animation - Responsive Container */}
+          <div
+            style={{
+              perspective: '1000px',
+              width: 'min(90vw, 600px)',
+              height: 'min(80vh, 500px)',
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              padding: 'clamp(20px, 5vw, 40px)',
+              transform: titleAnimation === 'closed' 
+                ? 'rotateY(0deg) scale(0.95)' 
+                : titleAnimation === 'opening'
+                ? 'rotateY(-90deg) scale(0.8)'
+                : 'rotateY(0deg) scale(1)',
+              transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              opacity: titleAnimation === 'opening' ? 0 : 1,
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #FFF0F8 0%, #FFE5F1 100%)',
+                borderRadius: 'clamp(16px, 4vw, 24px)',
+                padding: 'clamp(30px, 8vw, 50px) clamp(20px, 5vw, 40px)',
+                boxShadow: '0 20px 60px rgba(255, 105, 180, 0.4), 0 0 40px rgba(255, 182, 193, 0.3)',
+                border: '2px solid rgba(255, 182, 193, 0.6)',
+                textAlign: 'center',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 'clamp(16px, 4vw, 24px)',
+                transform: titleAnimation === 'closed' ? 'rotateY(0deg)' : 'rotateY(0deg)',
+                transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              {/* Hello Kitty Title - Top */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                marginBottom: 'clamp(12px, 3vw, 20px)',
+              }}>
+                <h1 
+                  style={{ 
+                    fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                    fontWeight: 'bold',
+                    color: '#FF69B4',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                    letterSpacing: '1px',
+                    fontSize: 'clamp(2rem, 8vw, 4rem)',
+                    lineHeight: '1.2',
+                    margin: 0,
+                    animation: titleAnimation === 'open' ? 'titlePulse 2s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  Hello
+                </h1>
+                <h1 
+                  style={{ 
+                    fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                    fontWeight: 'bold',
+                    color: '#FF69B4',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                    letterSpacing: '1px',
+                    fontSize: 'clamp(2rem, 8vw, 4rem)',
+                    lineHeight: '1.2',
+                    margin: 0,
+                    animation: titleAnimation === 'open' ? 'titlePulse 2s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  Kitty
+                </h1>
+              </div>
+
+              {/* Interactive Experience Button - Gradient */}
+              <div
+                style={{
+                  background: 'linear-gradient(90deg, #FFB6C1 0%, #FF69B4 100%)',
+                  borderRadius: 'clamp(12px, 3vw, 20px)',
+                  padding: 'clamp(12px, 3vw, 18px) clamp(24px, 6vw, 40px)',
+                  boxShadow: '0 4px 12px rgba(255, 105, 180, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 'clamp(16px, 4vw, 24px)',
+                }}
+              >
+                <span style={{
+                  fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                  fontSize: 'clamp(0.9rem, 3vw, 1.3rem)',
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                }}>
+                  Interactive
+                </span>
+                <span style={{
+                  fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                  fontSize: 'clamp(0.9rem, 3vw, 1.3rem)',
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                }}>
+                  Experience
+                </span>
+              </div>
+
+              {/* Subheading - Small Text */}
+              <p 
+                style={{
+                  fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                  fontSize: 'clamp(0.75rem, 2vw, 1rem)',
+                  color: '#888',
+                  lineHeight: '1.5',
+                  maxWidth: '90%',
+                  margin: 0,
+                  marginBottom: 'clamp(12px, 3vw, 20px)',
+                }}
+              >
+                Step into a magical world of memories and friendship. 
+                Hold to explore a collection of heartfelt moments.
+              </p>
+
+              {/* Click to Start Button */}
+              {titleAnimation === 'open' && (
+                <button
+                  className="transition-all duration-300 transform hover:scale-105 active:scale-95"
+                  style={{
+                    fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+                    fontSize: 'clamp(1rem, 3vw, 1.4rem)',
+                    fontWeight: 'bold',
+                    color: '#FFFFFF',
+                    background: 'linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%)',
+                    border: '2px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: 'clamp(16px, 4vw, 24px)',
+                    padding: 'clamp(10px, 2.5vw, 16px) clamp(24px, 6vw, 40px)',
+                    boxShadow: '0 6px 20px rgba(255, 105, 180, 0.4), 0 0 25px rgba(255, 182, 193, 0.4)',
+                    cursor: 'pointer',
+                    animation: 'buttonGlow 2s ease-in-out infinite',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTitleAnimation('opening');
+                    setTimeout(() => {
+                      setShowTitleScreen(false);
+                    }, 800);
+                  }}
+                >
+                  Click to Start ?
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Regular Title (hidden when title screen is shown) */}
+      {!showTitleScreen && (
+        <div className="absolute top-4 left-4 z-10 pointer-events-none">
+          <h1 className="text-3xl mb-2" style={{ 
+            fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+            fontWeight: 'bold',
+            color: '#FF69B4',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+            letterSpacing: '1px'
+          }}>
+            Hello Kitty
+          </h1>
+          <div className="px-3 py-1.5 rounded-full inline-block" style={{
+            background: 'linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+          }}>
+            <h2 className="text-sm font-semibold" style={{ 
+              fontFamily: "'Comic Sans MS', 'Marker Felt', cursive",
+              color: '#FFFFFF',
+              fontWeight: '600'
+            }}>Interactive Experience</h2>
+          </div>
+        </div>
+      )}
 
 
       {/* Music and Volume Toggle Buttons */}
@@ -2574,7 +2828,11 @@ export const HelloKittyLuxuryCard: React.FC = () => {
 
       <Canvas
         className="w-full"
-        style={{ height: '90vh' }}
+        style={{ 
+          height: '90vh',
+          maxHeight: '100vh',
+          maxWidth: '100vw',
+        }}
         gl={{ antialias: true, alpha: false }}
         camera={{ position: [0, 0, cameraZoom], fov: 50 }}
       >

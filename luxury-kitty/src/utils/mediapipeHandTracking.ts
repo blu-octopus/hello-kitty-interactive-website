@@ -34,7 +34,10 @@ export async function initializeHandTracking(
       numHands: 2,
     });
 
-    // Get user media
+    // Get user media with browser compatibility
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('getUserMedia is not supported in this browser');
+    }
     stream = await navigator.mediaDevices.getUserMedia({
       video: { width: 640, height: 480, facingMode: 'user' },
     });
